@@ -88,6 +88,7 @@ const calculateReadingTime = (body: string) => {
                       alt={posts[0].data.title}
                       width={600}
                       height={400}
+                      loading="eager"
                       class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 block dark:hidden"
                     />
                     {posts[0].data.heroImageDark && (
@@ -96,6 +97,8 @@ const calculateReadingTime = (body: string) => {
                         alt={posts[0].data.title}
                         width={600}
                         height={400}
+                      loading="eager"
+
                         class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 hidden dark:block"
                       />
                     )}

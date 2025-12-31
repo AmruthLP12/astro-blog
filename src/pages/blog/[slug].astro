@@ -125,6 +125,7 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
             width={1200}
             height={630}
             class="w-full h-auto"
+            loading="eager"
           />
           <div class="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl"></div>
         </div>
@@ -138,6 +139,7 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
             width={1200}
             height={630}
             class="w-full h-auto"
+            loading="eager"
           />
           <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl"></div>
         </div>
@@ -188,6 +190,7 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
               class="w-9 h-9 p-0 flex items-center justify-center"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Share on Twitter"
             >
               <XIcon />
             </Button>
@@ -198,6 +201,7 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
               class="w-9 h-9 p-0 flex items-center justify-center"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Share on LinkedIn"
             >
               <LinkedInIcon />
             </Button>
