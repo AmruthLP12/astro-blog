@@ -1,0 +1,63 @@
+---
+import Socials from "@/components/SocialLinks.astro";
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border bg-card">
+  <div class="mx-auto max-w-6xl px-4 py-12">
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-4">
+      
+      <!-- Brand -->
+      <div class="space-y-4">
+        <a href="/" class="text-xl font-semibold tracking-tight block">
+          <span class="text-foreground">Amruth</span>
+          <span class="text-primary">Blog</span>
+        </a>
+        <p class="text-sm text-muted-foreground">
+          Writing about web development, Astro, and things I learn along the way.
+        </p>
+      </div>
+
+      <!-- Blog -->
+      <div>
+        <h3 class="mb-4 font-semibold">Blog</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/blog" class="footer-link">All posts</a>
+          </li>
+          <li>
+            <a href="/blog/tags" class="footer-link">Tags</a>
+          </li>
+          <li>
+            <a href="/rss.xml" class="footer-link">RSS</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- About -->
+      <div>
+        <h3 class="mb-4 font-semibold">About</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="/about" class="footer-link">About me</a>
+          </li>
+          <li>
+            <a href="mailto:amruthlp12@gmail.com" class="footer-link">
+              Contact
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Social -->
+      <div>
+        <h3 class="mb-4 font-semibold">Follow</h3>
+        <Socials />
+      </div>
+    </div>
+
+    <div class="mt-10 border-t border-border pt-6 text-center text-sm text-muted-foreground">
+      <p>&copy; {year} Amruth LP. Built with Astro.</p>
+    </div>
+  </div>
+</footer>

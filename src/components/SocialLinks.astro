@@ -1,0 +1,24 @@
+---
+import { socials } from "@/config/socials";
+import { socialIcons } from "@/components/icons";
+---
+
+<div class="flex gap-2">
+  {socials.map((social) => {
+    const Icon = socialIcons[social.icon];
+
+    return (
+      <a
+        href={social.href}
+        target={social.href.startsWith("http") ? "_blank" : undefined}
+        rel={social.href.startsWith("http") ? "noopener noreferrer" : undefined}
+        aria-label={social.aria}
+        class="h-9 w-9 rounded-md bg-muted flex items-center justify-center
+               text-muted-foreground hover:text-primary hover:bg-primary/10
+               transition-colors"
+      >
+        <Icon />
+      </a>
+    );
+  })}
+</div>

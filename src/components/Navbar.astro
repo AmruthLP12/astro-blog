@@ -1,0 +1,133 @@
+---
+import ThemeToggle from "./theme-toggle.astro";
+import Menu from "./icons/Menu.astro";
+import Close from "./icons/Close.astro";
+
+const navItems = [
+  { href: "/", label: "Home" },
+  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
+];
+
+const pathname = Astro.url.pathname;
+
+// active if exact match OR blog sub-routes
+const isActive = (href:any) =>
+  href === "/blog"
+    ? pathname.startsWith("/blog")
+    : pathname === href;
+---
+
+<nav
+  id="navbar"
+  class="fixed top-0 z-50 w-full transition-all duration-300 bg-transparent"
+>
+  <div class="mx-auto max-w-6xl px-4">
+    <div class="flex h-16 items-center justify-between">
+      <!-- Logo -->
+      <a
+        href="/"
+        class="text-lg font-semibold tracking-tight transition-colors"
+      >
+        <span class="text-foreground">Amruth</span>
+        <span class="text-primary">Blog</span>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <div class="hidden md:flex items-center gap-1">
+        {
+          navItems.map((item) => (
+            <a
+              href={item.href}
+              class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                isActive(item.href)
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </div>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <ThemeToggle />
+
+        <!-- Mobile menu button -->
+        <button
+          id="menu-btn"
+          class="md:hidden h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted transition"
+          aria-label="Toggle menu"
+        >
+          <span id="menu-icon">
+            <Menu />
+          </span>
+          <span id="close-icon" class="hidden">
+            <Close />
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div
+      id="mobile-menu"
+      class="md:hidden hidden py-4 border-t border-border animate-in slide-in-from-top-4"
+    >
+      <div class="flex flex-col gap-2">
+        {
+          navItems.map((item) => (
+            <a
+              href={item.href}
+              class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                isActive(item.href)
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  const navbar = document.getElementById("navbar");
+  const menuBtn = document.getElementById("menu-btn");
+  const mobileMenu = document.getElementById("mobile-menu");
+  const menuIcon = document.getElementById("menu-icon");
+  const closeIcon = document.getElementById("close-icon");
+
+  // Scroll blur effect
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 20) {
+      navbar?.classList.add(
+        "bg-background/80",
+        "backdrop-blur-lg",
+        "border-b",
+        "border-border",
+        "shadow-sm"
+      );
+    } else {
+      navbar?.classList.remove(
+        "bg-background/80",
+        "backdrop-blur-lg",
+        "border-b",
+        "border-border",
+        "shadow-sm"
+      );
+    }
+  });
+
+  // Mobile menu toggle
+  menuBtn?.addEventListener("click", () => {
+    mobileMenu?.classList.toggle("hidden");
+    menuIcon?.classList.toggle("hidden");
+    closeIcon?.classList.toggle("hidden");
+  });
+</script>

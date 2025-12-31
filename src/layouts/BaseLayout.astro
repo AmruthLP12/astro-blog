@@ -1,0 +1,40 @@
+---
+const { title = "Astro Basics" } = Astro.props;
+import ThemeInit from "@/components/theme-init.astro";
+import "../styles/global.css";
+import Navbar from "@/components/Navbar.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Astro Blog RSS"
+      href="/rss.xml"
+    />
+    <title>{title}</title>
+    <ThemeInit />
+  </head>
+  <body>
+    <Navbar />
+    <slot />
+    <Footer />
+    <script src="/src/scripts/copy-code.ts" type="module"></script>
+  </body>
+</html>
+
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
