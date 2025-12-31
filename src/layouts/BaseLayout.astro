@@ -1,10 +1,10 @@
 ---
-const SITE_URL = "https://readev.vercel.app";
+const SITE_URL = "https://tecnodrishti.vercel.app"; // change later to custom domain
 const canonicalURL = new URL(Astro.url.pathname, SITE_URL).href;
 
 const {
-  title = "Readev – Practical Guides for Modern Web Developers",
-  description = "Readev is a developer-focused blog sharing practical guides, tutorials, and deep dives on Astro, Django, Next.js, Tailwind CSS, and modern web tooling.",
+  title = "Tecno Drishti – Clear Perspectives on Modern Technology",
+  description = "Tecno Drishti is a technology blog offering clear, insightful guides and deep dives into web development, software engineering, and modern tools.",
   image = "/og-image.png",
 } = Astro.props;
 
@@ -43,7 +43,7 @@ import Footer from "@/components/Footer.astro";
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:site_name" content="Readev" />
+    <meta property="og:site_name" content="Tecno Drishti" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -55,17 +55,17 @@ import Footer from "@/components/Footer.astro";
     <link
       rel="alternate"
       type="application/rss+xml"
-      title="Readev RSS Feed"
+      title="Tecno Drishti RSS Feed"
       href="/rss.xml"
     />
 
-    <!-- Structured Data: Website + Author -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Website",
-        "name": "Readev",
-        "url": "https://readev.vercel.app",
+        "name": "Tecno Drishti",
+        "url": "https://tecnodrishti.vercel.app",
         "publisher": {
           "@type": "Person",
           "name": "Amruth L P",
