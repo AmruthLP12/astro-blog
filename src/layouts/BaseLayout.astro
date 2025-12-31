@@ -1,5 +1,14 @@
 ---
-const { title = "Astro Basics" } = Astro.props;
+
+const SITE_URL = "https://Readev.vercel.app";
+const canonicalURL = new URL(Astro.url.pathname, SITE_URL).href;
+
+const {
+  title = "Readev – Practical Guides for Modern Web Developers",
+  description = "Readev is a developer-focused blog sharing practical guides, tutorials, and deep dives on Astro, Django, Next.js, Tailwind CSS, and modern web tooling.",
+  image = "/og-image.png",
+} = Astro.props;
+
 import ThemeInit from "@/components/theme-init.astro";
 import "../styles/global.css";
 import Navbar from "@/components/Navbar.astro";
@@ -9,23 +18,85 @@ import Footer from "@/components/Footer.astro";
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Basic -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Primary SEO -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta
+      name="keywords"
+      content="Astro, Astro Blog, Astro Starter Kit, Astro Theme, Blog, Developer, Developer Blog, Developer Guides, Developer Tutorials, Frontend, Frontend Developer, Frontend Developer Blog, Frontend Guides, Frontend Tutorials, Next.js, Next.js Blog, Next.js Starter Kit, Next.js Theme, Nextjs, React, React Blog, React Starter Kit, React Theme, Web Development, Web Developer, Web Developer Blog, Web Development Guides, Web Development Tutorials"
+    />
+    <meta name="author" content="Amruth L P" />
+
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Google -->
+    <meta
+      name="google-site-verification"
+      content="m3gcO3z77CpmDFtlEBa5Qk-g2yMOUvIFj34TKqbJMoU"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={image} />
+    <meta property="og:site_name" content="Readev" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
+    <!-- RSS -->
     <link
       rel="alternate"
       type="application/rss+xml"
-      title="Astro Blog RSS"
+      title="Readev RSS Feed"
       href="/rss.xml"
     />
-    <title>{title}</title>
+
+    <!-- Structured Data (FIXES "VERCEL" LABEL) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Readev",
+        "url": "https://readev.vercel.app",
+        "jobTitle": "Developer",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Bengaluru",
+          "addressCountry": "IN"
+        },
+        "sameAs": [
+          "https://github.com/AmruthLP12",
+          "https://www.linkedin.com/in/amruthlp",
+          "https://www.youtube.com/@CodeWithAmruth"
+        ]
+      }
+    </script>
+        
+
     <ThemeInit />
   </head>
+
   <body>
     <Navbar />
-    <slot />
+    <main id="content">
+      <slot />
+    </main>
     <Footer />
+
+
+
     <script src="/src/scripts/copy-code.ts" type="module"></script>
   </body>
 </html>
