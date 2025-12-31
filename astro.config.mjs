@@ -8,14 +8,14 @@ import sitemap from "@astrojs/sitemap";
 // https://astro.build/config
 export default defineConfig({
   vite: {
-  resolve: {
-    alias: {
-      "@": "src",
+    resolve: {
+      alias: {
+        "@": "src",
+      },
     },
-  },
 
-  plugins: [tailwindcss()],
-},
+    plugins: [tailwindcss()],
+  },
 
   output: "static",
 
