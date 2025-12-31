@@ -1,6 +1,5 @@
 ---
-
-const SITE_URL = "https://Readev.vercel.app";
+const SITE_URL = "https://readev.vercel.app";
 const canonicalURL = new URL(Astro.url.pathname, SITE_URL).href;
 
 const {
@@ -8,6 +7,8 @@ const {
   description = "Readev is a developer-focused blog sharing practical guides, tutorials, and deep dives on Astro, Django, Next.js, Tailwind CSS, and modern web tooling.",
   image = "/og-image.png",
 } = Astro.props;
+
+const ogImage = new URL(image, SITE_URL).href;
 
 import ThemeInit from "@/components/theme-init.astro";
 import "../styles/global.css";
@@ -27,12 +28,7 @@ import Footer from "@/components/Footer.astro";
     <!-- Primary SEO -->
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta
-      name="keywords"
-      content="Astro, Astro Blog, Astro Starter Kit, Astro Theme, Blog, Developer, Developer Blog, Developer Guides, Developer Tutorials, Frontend, Frontend Developer, Frontend Developer Blog, Frontend Guides, Frontend Tutorials, Next.js, Next.js Blog, Next.js Starter Kit, Next.js Theme, Nextjs, React, React Blog, React Starter Kit, React Theme, Web Development, Web Developer, Web Developer Blog, Web Development Guides, Web Development Tutorials"
-    />
     <meta name="author" content="Amruth L P" />
-
     <link rel="canonical" href={canonicalURL} />
 
     <!-- Google -->
@@ -46,14 +42,14 @@ import Footer from "@/components/Footer.astro";
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
-    <meta property="og:image" content={image} />
+    <meta property="og:image" content={ogImage} />
     <meta property="og:site_name" content="Readev" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={image} />
+    <meta name="twitter:image" content={ogImage} />
 
     <!-- RSS -->
     <link
@@ -63,27 +59,24 @@ import Footer from "@/components/Footer.astro";
       href="/rss.xml"
     />
 
-    <!-- Structured Data (FIXES "VERCEL" LABEL) -->
+    <!-- Structured Data: Website + Author -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Person",
+        "@type": "Website",
         "name": "Readev",
         "url": "https://readev.vercel.app",
-        "jobTitle": "Developer",
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Bengaluru",
-          "addressCountry": "IN"
-        },
-        "sameAs": [
-          "https://github.com/AmruthLP12",
-          "https://www.linkedin.com/in/amruthlp",
-          "https://www.youtube.com/@CodeWithAmruth"
-        ]
+        "publisher": {
+          "@type": "Person",
+          "name": "Amruth L P",
+          "sameAs": [
+            "https://github.com/AmruthLP12",
+            "https://www.linkedin.com/in/amruthlp",
+            "https://www.youtube.com/@CodeWithAmruth"
+          ]
+        }
       }
     </script>
-        
 
     <ThemeInit />
   </head>
@@ -95,17 +88,6 @@ import Footer from "@/components/Footer.astro";
     </main>
     <Footer />
 
-
-
     <script src="/src/scripts/copy-code.ts" type="module"></script>
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
-</style>
