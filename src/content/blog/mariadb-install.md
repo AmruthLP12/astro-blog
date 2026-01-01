@@ -27,7 +27,7 @@ sudo systemctl start mariadb sudo systemctl enable mariadb
 
 3. ## **Secure MariaDB**
 ```bash
-sudo mysql\_secure\_installation
+sudo mysql secure_installation
 ```
 - Recommended answers: Yes to all security prompts.
 
