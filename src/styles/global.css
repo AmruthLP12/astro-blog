@@ -4,6 +4,26 @@
 @plugin '@tailwindcss/typography';
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer utilities {
+  .shiki-copy-button {
+    @apply absolute top-2 right-2 rounded-md bg-zinc-800 text-zinc-100 px-2 py-1 text-xs opacity-0 transition;
+  }
+
+  .shiki:hover .shiki-copy-button {
+    @apply opacity-100;
+  }
+
+  .shiki-copy-button-success {
+    @apply text-green-400;
+  }
+
+  .shiki-copy-button-error {
+    @apply text-red-400;
+  }
+  .some-runtime-class {
+  }
+}
+
 @theme {
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -137,7 +157,6 @@
     @apply cursor-pointer;
   }
 }
-
 
 .prose p {
   margin-top: 0.5rem;
