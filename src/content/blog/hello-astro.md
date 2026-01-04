@@ -2,7 +2,7 @@
 title: "Hello Astro"
 description: "Setting up my first Astro-powered blog"
 category: personal
-pubDate: 2025-01-01T00:00:00Z
+pubDate: 2025-01-01 14:00
 heroImageDark: ./images/astro-logo-dark-gradient.png
 heroImageLight: ./images/astro-logo-light.png
 tags: ["astro", "web", "ui", "backend", "personal"]

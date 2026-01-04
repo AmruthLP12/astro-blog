@@ -1,10 +1,10 @@
 ---
 title: "MariaDB Installation"
 description: "MariaDB Installation and Usage on Linux (Debian/Ubuntu)"
-category: backend
-pubDate: 2026-12-31T21:28:00Z
-heroImageDark: ./images/astro-logo-dark-gradient.png
-heroImageLight: ./images/astro-logo-light.png
+category: database
+pubDate: 2026-01-02 17:00
+heroImageDark: ./images/mariadb.jpg
+heroImageLight: ./images/mariadb.jpg
 tags: ["astro", "web", "ui", "DB"]
 ---
 
