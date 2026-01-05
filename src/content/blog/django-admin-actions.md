@@ -1,0 +1,331 @@
+---
+title: "Django Admin Actions – Developer Documentation"
+description: "A **production-oriented, developer-focused guide** to using **Django Admin Actions** effectively. Covers bulk operations, confirmation workflows, permission checks, service-layer delegation, and best practices for scalable Django applications."
+category: backend
+pubDate: 2026-01-05 15:32
+heroImageDark: ./images/django_admin_actions.png
+heroImageLight: ./images/django_admin_actions.png
+tags:
+  [
+    "django",
+    "django-admin",
+    "admin-actions",
+    "backend",
+    "python",
+    "bulk-operations",
+    "permissions",
+    "service-layer",
+    "audit-logging",
+    "enterprise-django",
+    "best-practices",
+  ]
+---
+
+# **Django Admin Actions – Developer Documentation**
+
+## **Overview**
+
+**Django Admin Actions** allow administrators to perform **bulk operations** on selected records directly from the Django Admin changelist page.
+
+They are commonly used for:
+
+- Bulk approvals / rejections
+- Status updates
+- Data cleanup
+- Triggering workflows (salary generation, leave approval, etc.)
+
+Admin actions operate on a **QuerySet**, making them efficient and scalable.
+
+## **How Admin Actions Work**
+
+An admin action:
+
+- Appears as a dropdown in the Django Admin list view
+- Runs on **selected rows**
+- Receives:
+
+  - modeladmin (or self)
+  - request
+  - queryset
+
+**Method signature:**
+
+```python
+def action(self, request, queryset):
+
+    pass
+```
+
+## **Basic Admin Action**
+
+### **Description**
+
+A simple bulk update action without confirmation or permissions.
+
+### **Example**
+
+```python
+# admin.py
+
+from django.contrib import admin
+
+from .models import Employee
+
+@admin.register(Employee)
+
+class EmployeeAdmin(admin.ModelAdmin):
+
+    list_display = ("emp_id", "full_name", "is_active")
+
+    @admin.action(description="Mark selected employees as active")
+
+    def mark_active(self, request, queryset):
+
+        queryset.update(is_active=True)
+
+    actions = ["mark_active"]
+```
+
+## **Admin Action as a Method (Recommended)**
+
+### **Description**
+
+Defining the action inside ModelAdmin keeps logic organized and readable.
+
+### **Benefits**
+
+- Better cohesion
+- Easier permission checks
+- Cleaner imports
+
+### **Example**
+
+```python
+@admin.action(description="Deactivate selected employees")
+
+def deactivate_employees(self, request, queryset):
+
+    queryset.update(is_active=False)
+```
+
+## **Admin Action with Confirmation Page**
+
+### **Description**
+
+Used when an action is **destructive or critical** (approvals, Restricts).
+
+### **Flow**
+
+1.  User selects records
+2.  Confirmation page is shown
+3.  Action executes only after confirmation
+
+### **Example**
+
+```python
+from django.shortcuts import render
+
+from django.http import HttpResponseRedirect
+
+@admin.action(description="Approve selected employees")
+
+def approve_employees(self, request, queryset):
+
+    if "confirm" in request.POST:
+
+        queryset.update(is_approved=True)
+
+        self.message_user(request, "Employees approved successfully")
+
+        return HttpResponseRedirect(request.get_full_path())
+
+    return render(
+
+        request,
+
+        "admin/employee_approve_confirm.html",
+
+        {"employees": queryset}
+
+    )
+```
+
+### **Template**
+
+```python
+<!-- templates/admin/employee_approve_confirm.html -->
+<form method="post">
+    {% csrf_token %}
+    <p>
+        Are you sure you want to approve {{ employees|length }} employees?
+    </p>
+    <input type="hidden" name="confirm" value="1">
+    <button type="submit" class="button default">
+        Yes, approve
+    </button>
+</form>
+```
+
+## **Admin Action with Permission Checks**
+
+### **Description**
+
+Restricts actions to authorized users .
+
+### **Example**
+
+```python
+@admin.action(description="Generate salary slips")
+
+def generate_salary_slips(self, request, queryset):
+
+    if not request.user.has_perm("payroll.can_generate_salary"):
+
+        self.message_user(
+
+            request,
+
+            "You do not have permission to perform this action",
+
+            level="error"
+
+        )
+
+        return
+
+    for employee in queryset:
+
+        SalaryService.generate(employee)
+```
+
+## **Passing User Context & Audit Logging**
+
+### **Description**
+
+Admin actions always have access to the logged-in user.
+
+### **Common Use Cases**
+
+- Audit logs
+- Approval history
+- Actor attribution
+
+### **Example**
+
+```python
+
+@admin.action(description="Approve leave applications")
+
+def approve_leave(self, request, queryset):
+
+    for leave in queryset:
+
+        leave.approved_by = request.user
+
+        leave.save()
+```
+
+## **Conditionally Enabling / Disabling Actions**
+
+### **Description**
+
+Actions can be shown or hidden based on user role.
+
+### **Example**
+
+```python
+def get_actions(self, request):
+
+    actions = super().get_actions(request)
+
+    if not request.user.is_superuser:
+
+        actions.pop("deactivate_employees", None)
+
+    return actions
+```
+
+## **Using Service Layer (Best Practice)**
+
+### **Description**
+
+Admin actions should **delegate business logic** to services.
+
+### **Why?**
+
+- Keeps admin thin
+- Reusable logic
+- Easier testing
+
+### **Example**
+
+```python
+# admin.py
+
+@admin.action(description="Approve leave applications")
+
+def approve_leave(self, request, queryset):
+
+    LeaveApprovalService.bulk_approve(
+
+        leaves=queryset,
+
+        actor=request.user
+
+    )
+```
+
+```python
+# services/leave_approval.py
+
+class LeaveApprovalService:
+
+    @staticmethod
+
+    def bulk_approve(leaves, user):
+
+        for leave in leaves:
+
+            leave.approve(by=user)
+```
+
+## **Common Pitfalls**
+
+❌ Writing complex business logic in admin.py
+
+❌ Running long tasks synchronously
+
+❌ Skipping permission checks
+
+❌ Not tracking request.user
+
+## **Recommended Usage**
+
+- Use admin actions for:
+
+  - Bulk approvals
+  - Status changes
+  - Administrative corrections
+
+- Use services for:
+
+  - Approval workflows
+  - Payroll logic
+  - Leave processing
+
+- Use custom views for:
+
+  - Multi-stage workflows
+  - User-facing processes
+
+## **Summary**
+
+- Admin actions are **powerful but should be lightweight**
+- Always pass logic to **service layer**
+- Use confirmation pages for critical operations
+- Track the **actor** for auditing
+
+---
+
+**Author:** Amruth L P
+**Purpose:** Production-ready implementation of Django Admin Actions for backend systems, focusing on clean architecture, security, auditability, and maintainable business logic.

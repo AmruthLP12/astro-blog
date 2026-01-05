@@ -95,6 +95,8 @@ import Footer from "@/components/Footer.astro";
     <script type="module">
       document.querySelectorAll("pre").forEach((pre) => {
         const button = document.createElement("button");
+        button.setAttribute("aria-label", "Copy code to clipboard");
+        button.type = "button";
         button.textContent = "Copy";
         button.className =
           "absolute top-2 right-2 text-xs px-2 py-1 rounded bg-muted-foreground text-foreground";
