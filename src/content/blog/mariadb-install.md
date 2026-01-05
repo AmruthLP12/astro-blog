@@ -5,7 +5,7 @@ category: database
 pubDate: 2026-01-02 17:00
 heroImageDark: ./images/mariadb.jpg
 heroImageLight: ./images/mariadb.jpg
-tags: ["astro", "web", "ui", "DB"]
+tags: ["mariadb", "linux", "database"]
 ---
 
 

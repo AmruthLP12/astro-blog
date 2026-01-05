@@ -147,9 +147,9 @@ const calculateReadingTime = (body: string) => {
                       {/* Category Badge */}
                       {post.data.category && (
                         <div class="absolute top-3 right-3">
-                          <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
+                          <a href={`/blog/category/${post.data.category.toLowerCase()}/`} class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
                             {post.data.category}
-                          </span>
+                          </a>
                         </div>
                       )}
                     </div>
@@ -171,9 +171,9 @@ const calculateReadingTime = (body: string) => {
                     {post.data.tags && post.data.tags.length > 0 && (
                       <div class="flex flex-wrap gap-1.5">
                         {post.data.tags.slice(0, 2).map((tag) => (
-                          <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
+                          <a href={`/blog/tag/${tag.toLowerCase()}/`} class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
                             #{tag}
-                          </span>
+                          </a>
                         ))}
                         {post.data.tags.length > 2 && (
                           <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">

@@ -5,21 +5,25 @@ import CardContent from "@/components/starwind/card/CardContent.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
+import BlogHero from "@/components/BlogHero.astro";
+import FeaturedBlog from "@/components/FeaturedBlog.astro";
 
-const posts = (await getCollection("blog"))
-  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
 
-// Group posts by year for timeline view
-const postsByYear = posts.reduce((acc, post) => {
-  const year = post.data.pubDate.getFullYear().toString();
-  if (!acc[year]) acc[year] = [];
-  acc[year].push(post);
-  return acc;
-}, {} as Record<string, typeof posts>);
+const postsByYear = posts.reduce(
+  (acc, post) => {
+    const year = post.data.pubDate.getFullYear().toString();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(post);
+    return acc;
+  },
+  {} as Record<string, typeof posts>
+);
 
 const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 
-// Calculate reading time for a post
 const calculateReadingTime = (body: string) => {
   const wordsPerMinute = 200;
   const wordCount = body.split(/\s+/).length;
@@ -27,286 +31,371 @@ const calculateReadingTime = (body: string) => {
 };
 ---
 
-<BaseLayout title="Blog">
+<BaseLayout
+  title="Tecno Drishti Blog – Insights, Guides & Tutorials on Modern Technology"
+  description="Explore the Tecno Drishti blog for in-depth articles, tutorials, and practical insights on web development, software engineering, databases, DevOps, and modern developer tools."
+>
   <main class="min-h-screen">
-    <!-- Hero Section with Gradient Background -->
-    <div class="relative bg-linear-to-br from-background via-background to-muted/20 border-b border-border">
-      <div class="mx-auto max-w-5xl px-6 py-20 md:py-28">
-        <!-- Breadcrumb -->
-        <nav class="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <a href="/" class="hover:text-foreground transition-colors">Home</a>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-          <span class="text-foreground font-medium">Blog</span>
-        </nav>
+    <!-- Hero Section -->
 
-        <!-- Enhanced Header -->
-        <header class="text-center space-y-6">
-          <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full border border-primary/20">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            {posts.length} {posts.length === 1 ? 'Article' : 'Articles'}
-          </div>
-          
-          <h1 class="text-5xl md:text-7xl font-bold tracking-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-            Blog & Writings
-          </h1>
-          
-          <p class="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Thoughts on technology, design, development, and everything in between. 
-            Join me on my journey of continuous learning and exploration.
-          </p>
-        </header>
-      </div>
-    </div>
-
+    <BlogHero />
     <div class="mx-auto max-w-5xl px-6 py-16">
-      <!-- Featured Post (Latest) -->
-      {posts.length > 0 && (
-        <section class="mb-20">
-          <div class="flex items-center gap-2 mb-8">
-            <div class="h-px flex-1 bg-border"></div>
-            <span class="text-sm font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              Featured
-            </span>
-            <div class="h-px flex-1 bg-border"></div>
-          </div>
-          
-          <Card class="border-2 border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-            <CardContent class="p-0">
-              <div class="flex flex-col lg:flex-row">
-                <!-- Featured Image -->
-                {posts[0].data.heroImageLight && (
-                  <div class="relative lg:w-2/5 overflow-hidden">
-                    <Image
-                      src={posts[0].data.heroImageLight}
-                      alt={posts[0].data.title}
-                      width={600}
-                      height={400}
-                      loading="eager"
-                      class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 block dark:hidden"
-                    />
-                    {posts[0].data.heroImageDark && (
-                      <Image
-                        src={posts[0].data.heroImageDark}
-                        alt={posts[0].data.title}
-                        width={600}
-                        height={400}
-                      loading="eager"
+      <!-- Featured Post -->
 
-                        class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 hidden dark:block"
-                      />
-                    )}
-                    <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent lg:bg-linear-to-r"></div>
-                  </div>
-                )}
+      <FeaturedBlog />
 
-                <!-- Featured Content -->
-                <div class="flex-1 p-8 lg:p-10 space-y-6">
-                  <div class="flex items-center gap-3 flex-wrap">
-                    {posts[0].data.category && (
-                      <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                        {posts[0].data.category}
-                      </span>
-                    )}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-primary text-primary-foreground">
-                      Latest Post
-                    </span>
-                  </div>
-                  
-                  <h2 class="text-3xl md:text-4xl font-bold leading-tight group-hover:text-primary transition-colors">
-                    {posts[0].data.title}
-                  </h2>
+      <!-- Search & Filter Bar -->
+      <div
+        class="mb-12 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center"
+      >
+        <div class="relative flex-1">
+          <input
+            id="blog-search"
+            type="text"
+            placeholder="Search articles, tags, categories…"
+            class="w-full rounded-lg border border-border bg-background px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+            autocomplete="off"
+          />
+          <svg
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-4.35-4.35m1.85-5.65a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"
+            ></path>
+          </svg>
+        </div>
 
-                  <p class="text-muted-foreground leading-relaxed text-base md:text-lg">
-                    {posts[0].data.description}
-                  </p>
-
-                  <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <time class="flex items-center gap-1.5">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {posts[0].data.pubDate.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </time>
-                    <span class="flex items-center gap-1.5">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {calculateReadingTime(posts[0].body)} min read
-                    </span>
-                  </div>
-
-                  <Button
-                    href={`/blog/${posts[0].slug}/`}
-                    variant="primary"
-                    size="lg"
-                    class="mt-4"
-                  >
-                    Read Full Article
-                    <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
+        <span
+          id="search-count"
+          class="text-sm text-muted-foreground whitespace-nowrap"
+        >
+          Showing{" "}
+          <span id="search-count-number">{posts.length}</span>
+          {posts.length === 1 ? " post" : " posts"}
+        </span>
+      </div>
 
       <!-- Timeline View -->
-      <section>
+      <section id="posts-timeline">
         <div class="flex items-center gap-2 mb-10">
           <div class="h-px flex-1 bg-border"></div>
-          <span class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">All Posts</span>
+          <span
+            class="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+            >All Posts</span
+          >
           <div class="h-px flex-1 bg-border"></div>
         </div>
 
         <div class="space-y-16">
-          {years.map((year) => (
-            <div class="space-y-8">
-              <!-- Year Header -->
-              <div class="flex items-center gap-4 sticky top-4 bg-background/95 backdrop-blur-sm py-3 px-4 -mx-4 rounded-lg border border-border/50 z-10 shadow-sm">
-                <h3 class="text-3xl font-bold">{year}</h3>
-                <div class="h-px flex-1 bg-border"></div>
-                <span class="text-sm font-medium text-muted-foreground px-3 py-1 bg-muted rounded-full">
-                  {postsByYear[year].length} {postsByYear[year].length === 1 ? 'post' : 'posts'}
-                </span>
-              </div>
+          {
+            years.map((year) => (
+              <div class="year-section space-y-8" data-year={year}>
+                <div class="year-header flex items-center gap-4 sticky top-4 bg-background/95 backdrop-blur-sm py-3 px-4 -mx-4 rounded-lg border border-border/50 z-10 shadow-sm">
+                  <h3 class="text-3xl font-bold">{year}</h3>
+                  <div class="h-px flex-1 bg-border" />
+                  <span class="text-sm font-medium text-muted-foreground px-3 py-1 bg-muted rounded-full">
+                    <span class="year-post-count">
+                      {postsByYear[year].length}
+                    </span>{" "}
+                    {postsByYear[year].length === 1 ? "post" : "posts"}
+                  </span>
+                </div>
 
-              <!-- Posts Grid -->
-              <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {postsByYear[year].map((post) => (
-                  <Card class="hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20">
-                    <CardContent class="p-0 h-full flex flex-col">
-                      <!-- Card Image -->
-                      {post.data.heroImageLight && (
-                        <div class="relative h-48 overflow-hidden">
-                          <Image
-                            src={post.data.heroImageLight}
-                            alt={post.data.title}
-                            width={400}
-                            height={250}
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 block dark:hidden"
-                          />
-                          {post.data.heroImageDark && (
-                            <Image
-                              src={post.data.heroImageDark}
-                              alt={post.data.title}
-                              width={400}
-                              height={250}
-                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 hidden dark:block"
-                            />
-                          )}
-                          <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
-                          
-                          {post.data.category && (
-                            <div class="absolute top-3 left-3">
-                              <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
-                                {post.data.category}
-                              </span>
+                <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {postsByYear[year].map((post) => (
+                    <div
+                      class="post-card"
+                      data-search-text={`${post.data.title.toLowerCase()} ${post.data.description.toLowerCase()} ${post.data.category?.toLowerCase() || ""} ${post.data.tags?.map((t) => t.toLowerCase()).join(" ") || ""}`}
+                    >
+                      <Card class="hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20 h-full">
+                        <CardContent class="p-0 h-full flex flex-col">
+                          {post.data.heroImageLight && (
+                            <div class="relative h-48 overflow-hidden">
+                              <Image
+                                src={post.data.heroImageLight}
+                                alt={post.data.title}
+                                width={400}
+                                height={250}
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 block dark:hidden"
+                              />
+                              {post.data.heroImageDark && (
+                                <Image
+                                  src={post.data.heroImageDark}
+                                  alt={post.data.title}
+                                  width={400}
+                                  height={250}
+                                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 hidden dark:block"
+                                />
+                              )}
+                              <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+
+                              {post.data.category && (
+                                <div class="absolute top-3 left-3">
+                                  <a
+                                    href={`/blog/category/${post.data.category.toLowerCase()}/`}
+                                    class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50"
+                                  >
+                                    {post.data.category}
+                                  </a>
+                                </div>
+                              )}
                             </div>
                           )}
-                        </div>
-                      )}
 
-                      <!-- Card Content -->
-                      <div class="p-6 flex-1 flex flex-col space-y-4">
-                        <div class="flex-1 space-y-3">
-                          <h2 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                            {post.data.title}
-                          </h2>
+                          <div class="p-6 flex-1 flex flex-col space-y-4">
+                            <div class="flex-1 space-y-3">
+                              <h2 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                                {post.data.title}
+                              </h2>
+                              <p class="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+                                {post.data.description}
+                              </p>
+                            </div>
 
-                          <p class="text-muted-foreground text-sm leading-relaxed line-clamp-3">
-                            {post.data.description}
-                          </p>
-                        </div>
-
-                        {/* Tags */}
-                        {post.data.tags && post.data.tags.length > 0 && (
-                          <div class="flex flex-wrap gap-1.5">
-                            {post.data.tags.slice(0, 3).map((tag) => (
-                              <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
-                                #{tag}
-                              </span>
-                            ))}
-                            {post.data.tags.length > 3 && (
-                              <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
-                                +{post.data.tags.length - 3}
-                              </span>
+                            {post.data.tags && post.data.tags.length > 0 && (
+                              <div class="flex flex-wrap gap-1.5">
+                                {post.data.tags.slice(0, 3).map((tag) => (
+                                  <a
+                                    href={`/blog/tag/${tag.toLowerCase()}/`}
+                                    class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50"
+                                  >
+                                    #{tag}
+                                  </a>
+                                ))}
+                                {post.data.tags.length > 3 && (
+                                  <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
+                                    +{post.data.tags.length - 3}
+                                  </span>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
 
-                        <div class="pt-4 border-t border-border space-y-4">
-                          <div class="flex items-center justify-between text-xs text-muted-foreground">
-                            <time class="flex items-center gap-1">
-                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {post.data.pubDate.toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })}
-                            </time>
-                            <span class="flex items-center gap-1">
-                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {calculateReadingTime(post.body)} min
-                            </span>
-                          </div>
+                            <div class="pt-4 border-t border-border space-y-4">
+                              <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <time class="flex items-center gap-1">
+                                  <svg
+                                    class="w-3.5 h-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                  {post.data.pubDate.toLocaleDateString(
+                                    "en-US",
+                                    { month: "short", day: "numeric" }
+                                  )}
+                                </time>
+                                <span class="flex items-center gap-1">
+                                  <svg
+                                    class="w-3.5 h-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  {calculateReadingTime(post.body)} min
+                                </span>
+                              </div>
 
-                          <Button
-                            href={`/blog/${post.slug}/`}
-                            variant="ghost"
-                            size="sm"
-                            class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
-                          >
-                            Read Article
-                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                              <Button
+                                href={`/blog/${post.slug}/`}
+                                variant="ghost"
+                                size="sm"
+                                class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
+                              >
+                                Read Article
+                                <svg
+                                  class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          }
         </div>
       </section>
 
-      <!-- Empty State -->
-      {posts.length === 0 && (
-        <div class="text-center py-24">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted/50 text-muted-foreground mb-6">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-            </svg>
-          </div>
-          <h3 class="text-2xl font-bold mb-3">No posts yet</h3>
-          <p class="text-muted-foreground text-lg mb-8">Check back soon for new content and insights!</p>
-          <Button href="/" variant="outline">
-            Return Home
-          </Button>
+      <!-- No Results -->
+      <div id="no-results" class="hidden text-center py-16">
+        <div
+          class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted/50 mb-6"
+        >
+          <svg
+            class="w-10 h-10 text-muted-foreground"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
-      )}
+        <h3 class="text-2xl font-bold mb-2">No posts found</h3>
+        <p class="text-muted-foreground">Try adjusting your search terms.</p>
+      </div>
+
+      <!-- Original empty state -->
+      {
+        posts.length === 0 && (
+          <div class="text-center py-24">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted/50 text-muted-foreground mb-6">
+              <svg
+                class="w-10 h-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">No posts yet</h3>
+            <p class="text-muted-foreground text-lg mb-8">
+              Check back soon for new content and insights!
+            </p>
+            <Button href="/" variant="outline">
+              Return Home
+            </Button>
+          </div>
+        )
+      }
     </div>
   </main>
+
+  <!-- Fixed Client Script with Proper TypeScript -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.getElementById(
+        "blog-search"
+      ) as HTMLInputElement | null;
+      const searchCountNumber = document.getElementById(
+        "search-count-number"
+      ) as HTMLElement | null;
+      const searchCount = document.getElementById(
+        "search-count"
+      ) as HTMLElement | null;
+      const timeline = document.getElementById(
+        "posts-timeline"
+      ) as HTMLElement | null;
+      const noResults = document.getElementById(
+        "no-results"
+      ) as HTMLElement | null;
+      const yearSections = document.querySelectorAll(
+        ".year-section"
+      ) as NodeListOf<HTMLElement>;
+      const postCards = document.querySelectorAll(
+        ".post-card"
+      ) as NodeListOf<HTMLElement>;
+
+      if (
+        !searchInput ||
+        !searchCountNumber ||
+        !searchCount ||
+        !timeline ||
+        !noResults
+      )
+        return;
+
+      const performSearch = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleTimelinePosts = 0;
+
+        let hasAnyVisiblePosts = false;
+
+        yearSections.forEach((section) => {
+          let yearHasVisiblePosts = false;
+          const header = section.querySelector(
+            ".year-header"
+          ) as HTMLElement | null;
+          const cardsInYear = section.querySelectorAll(
+            ".post-card"
+          ) as NodeListOf<HTMLElement>;
+
+          cardsInYear.forEach((card) => {
+            const text = card.dataset.searchText || "";
+            const matches = query === "" || text.includes(query);
+
+            card.style.display = matches ? "" : "none";
+
+            if (matches) {
+              visibleTimelinePosts++;
+              yearHasVisiblePosts = true;
+              hasAnyVisiblePosts = true;
+            }
+          });
+
+          // Show/hide entire year section
+          if (header && section) {
+            if (yearHasVisiblePosts || query === "") {
+              section.style.display = "";
+              header.style.display = "";
+            } else {
+              section.style.display = "none";
+              header.style.display = "none";
+            }
+          }
+        });
+
+        // Update counter — only timeline posts
+        searchCountNumber.textContent = visibleTimelinePosts.toString();
+        if (searchCount.lastChild) {
+          searchCount.lastChild.textContent =
+            visibleTimelinePosts === 1 ? "post" : "posts";
+        }
+
+        // Show/hide no results message
+        if (visibleTimelinePosts === 0 && query !== "") {
+          noResults.classList.remove("hidden");
+          timeline.style.display = "none";
+        } else {
+          noResults.classList.add("hidden");
+          timeline.style.display = "";
+        }
+      };
+
+      searchInput.addEventListener("input", performSearch);
+      performSearch(); // Run once on load
+    });
+  </script>
 </BaseLayout>
