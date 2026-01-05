@@ -1,0 +1,13 @@
+---
+---
+
+<pre class="group relative rounded-xl bg-muted p-4 overflow-x-auto">
+  <button
+    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition text-xs px-2 py-1 rounded bg-background border"
+    onclick="navigator.clipboard.writeText(this.nextElementSibling.innerText)"
+  >
+    Copy
+  </button>
+
+  <code class="text-sm"><slot /></code>
+</pre>

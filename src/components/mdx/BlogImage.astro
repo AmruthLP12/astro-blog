@@ -1,0 +1,21 @@
+---
+import { Image } from "astro:assets";
+
+const { src, alt = "", caption } = Astro.props;
+---
+
+<figure class="my-8">
+  <Image
+    src={src}
+    alt={alt}
+    class="rounded-xl border border-border shadow-sm"
+    widths={[480, 768, 1024, 1280]}
+    sizes="(max-width: 768px) 100vw, 768px"
+    loading="lazy"
+  />
+  {caption && (
+    <figcaption class="mt-2 text-sm text-muted-foreground text-center">
+      {caption}
+    </figcaption>
+  )}
+</figure>

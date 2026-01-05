@@ -8,6 +8,8 @@ import Prose from "@/components/Prose.astro";
 import { Image } from "astro:assets";
 import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
+import BlogImage from "@/components/mdx/BlogImage.astro";
+import CodeBlock from "@/components/mdx/CodeBlock.astro";
 
 // Get all posts for "Other Articles"
 const allPosts = await getCollection("blog");
@@ -249,7 +251,11 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       <!-- Main Content with Enhanced Typography -->
       <div class="prose-wrapper">
         <Prose>
-          <Content />
+          <Content
+          components={{
+            img: BlogImage,
+          }}
+          />
         </Prose>
       </div>
 
