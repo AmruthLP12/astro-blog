@@ -28,12 +28,6 @@ export default defineConfig({
     },
   },
 
-<<<<<<< HEAD
   site: "https://tecnodrishti.vercel.app",
   integrations: [sitemap(), mdx()],
 });
-=======
-  site: "https://technodrishti.vercel.app",
-  integrations: [sitemap()],
-});
->>>>>>> 47cddbb (fix: correct spelling of "Tecno" to "Techno" and update site URL in multiple files)
