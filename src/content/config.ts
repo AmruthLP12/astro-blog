@@ -11,6 +11,7 @@ const blog = defineCollection({
     z.object({
       title: z.string(),
       description: z.string(),
+      author: z.string().optional(),
       pubDate: parseDate,
       updatedDate: parseDate.optional(),
 

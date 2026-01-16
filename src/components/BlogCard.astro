@@ -11,6 +11,7 @@ interface Props {
     data: {
       title: string;
       description: string;
+      author?: string;
       pubDate: Date;
       updatedDate?: Date;
       category?: string;
@@ -205,6 +206,27 @@ const formatDateWithYear = (date: Date) => {
               </svg>
               {calculateReadingTime(post.body)} min
             </span>
+            {
+              post.data.author && (
+                <span class="flex items-center gap-1">
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    ></path>
+                  </svg>
+                  {post.data.author}
+                </span>
+              )
+            }
+            
           </div>
 
           {/* Show updated date if different from published date */}
