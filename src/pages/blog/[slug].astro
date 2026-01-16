@@ -5,11 +5,8 @@ import Button from "@/components/starwind/button/Button.astro";
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
 import Prose from "@/components/Prose.astro";
-import { Image } from "astro:assets";
 import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
-import BlogImage from "@/components/mdx/BlogImage.astro";
-import CodeBlock from "@/components/mdx/CodeBlock.astro";
 
 // Get all posts for "Other Articles"
 const allPosts = await getCollection("blog");
@@ -192,8 +189,8 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       {
         post.data.heroImageLight && (
           <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 block dark:hidden">
-            <Image
-              src={post.data.heroImageLight}
+            <img
+              src={post.data.heroImageLight.src}
               alt={post.data.title}
               width={1200}
               height={630}
@@ -208,8 +205,8 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       {
         post.data.heroImageDark && (
           <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 hidden dark:block">
-            <Image
-              src={post.data.heroImageDark}
+            <img
+              src={post.data.heroImageDark.src}
               alt={post.data.title}
               width={1200}
               height={630}
@@ -252,9 +249,7 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       <div class="prose-wrapper">
         <Prose>
           <Content
-          components={{
-            img: BlogImage,
-          }}
+          
           />
         </Prose>
       </div>

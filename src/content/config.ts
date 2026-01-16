@@ -1,17 +1,18 @@
 import { defineCollection, z } from "astro:content";
 
+const parseDate = z.union([z.string(), z.date()]).transform((value) => {
+  if (value instanceof Date) return value;
+  return new Date(value.replace(" ", "T") + ":00+05:30");
+});
+
 const blog = defineCollection({
   type: "content",
   schema: ({ image }) =>
     z.object({
       title: z.string(),
       description: z.string(),
-      pubDate: z
-        .string()
-        .transform((value) => {
-          // Convert "YYYY-MM-DD HH:mm" IST → Date
-          return new Date(value.replace(" ", "T") + ":00+05:30");
-        }),
+      pubDate: parseDate,
+      updatedDate: parseDate.optional(),
 
       // ✅ OPTIONAL hero image
       heroImageDark: image().optional(),

@@ -5,7 +5,6 @@ import CardContent from "./starwind/card/CardContent.astro";
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
-import { Image } from "astro:assets";
 import Button from "./starwind/button/Button.astro";
 
 const calculateReadingTime = (body: string) => {
@@ -34,8 +33,8 @@ const calculateReadingTime = (body: string) => {
           <div class="flex flex-col lg:flex-row">
             {posts[0].data.heroImageLight && (
               <div class="relative lg:w-2/5 overflow-hidden">
-                <Image
-                  src={posts[0].data.heroImageLight}
+                <img
+                  src={posts[0].data.heroImageLight.src}
                   alt={posts[0].data.title}
                   width={600}
                   height={400}
@@ -43,8 +42,8 @@ const calculateReadingTime = (body: string) => {
                   class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 block dark:hidden"
                 />
                 {posts[0].data.heroImageDark && (
-                  <Image
-                    src={posts[0].data.heroImageDark}
+                  <img
+                    src={posts[0].data.heroImageDark.src}
                     alt={posts[0].data.title}
                     width={600}
                     height={400}

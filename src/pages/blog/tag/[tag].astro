@@ -5,7 +5,6 @@ import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
 import Button from "@/components/starwind/button/Button.astro";
 import { getCollection } from "astro:content";
-import { Image } from "astro:assets";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -72,16 +71,16 @@ const calculateReadingTime = (body: string) => {
               <CardContent class="p-0 h-full flex flex-col">
                 {post.data.heroImageLight && (
                   <div class="relative h-48 overflow-hidden">
-                    <Image
-                      src={post.data.heroImageLight}
+                    <img
+                      src={post.data.heroImageLight.src}
                       alt={post.data.title}
                       width={400}
                       height={250}
                       class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 block dark:hidden"
                     />
                     {post.data.heroImageDark && (
-                      <Image
-                        src={post.data.heroImageDark}
+                      <img
+                        src={post.data.heroImageDark.src}
                         alt={post.data.title}
                         width={400}
                         height={250}
