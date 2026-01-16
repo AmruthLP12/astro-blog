@@ -5,8 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 
 import sitemap from "@astrojs/sitemap";
 
-import mdx from "@astrojs/mdx";
-
 // https://astro.build/config
 export default defineConfig({
   vite: {
@@ -22,7 +20,7 @@ export default defineConfig({
   output: "static",
   image: {
     service: {
-      entrypoint: 'astro/assets/services/noop',
+      entrypoint: "astro/assets/services/noop",
     },
   },
 
@@ -34,5 +32,5 @@ export default defineConfig({
   },
 
   site: "https://tecnodrishti.vercel.app",
-  integrations: [sitemap(), mdx()],
+  integrations: [sitemap()],
 });

@@ -4,29 +4,13 @@ import { getCollection } from "astro:content";
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
 import Button from "@/components/starwind/button/Button.astro";
-import { Image } from "astro:assets";
+import BlogCard from "@/components/BlogCard.astro";
 
 const postlen = await getCollection("blog")
 
 const posts = (await getCollection("blog"))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
   .slice(0, 3);
-
-// Calculate reading time
-const calculateReadingTime = (body: string) => {
-  const wordsPerMinute = 200;
-  const wordCount = body.split(/\s+/).length;
-  return Math.ceil(wordCount / wordsPerMinute);
-};
-
-// Helper function to format dates
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
 ---
 
 <BaseLayout title="Techno Drishti – Clear Perspectives on Modern Technology" description="Techno Drishti is a technology blog offering clear, insightful guides and deep dives into web development, software engineering, and modern tools.">
@@ -125,120 +109,13 @@ const formatDate = (date: Date) => {
           {/* Posts Grid */}
           <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post, index) => (
-              <Card class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden">
-                <CardContent class="p-0 h-full flex flex-col">
-                  {/* Hero Image */}
-                  
-                  {post.data.heroImageLight && (
-                    <div class="relative h-48 overflow-hidden">
-                      <img
-                        src={post.data.heroImageLight.src}
-                        alt={post.data.title}
-                        width={400}
-                        height={250}
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 block dark:hidden"
-                      />
-                      {post.data.heroImageDark && (
-                        <img
-                          src={post.data.heroImageDark.src}
-                          alt={post.data.title}
-                          width={400}
-                          height={250}
-                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 hidden dark:block"
-                        />
-                      )}
-                      <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
-                      
-                      {/* Post Number Badge */}
-                      <div class="absolute top-3 left-3">
-                        <span class="inline-flex items-center justify-center w-8 h-8 text-xs font-bold rounded-full bg-primary text-primary-foreground shadow-lg">
-                          {index + 1}
-                        </span>
-                      </div>
-
-                      {/* Category Badge */}
-                      {post.data.category && (
-                        <div class="absolute top-3 right-3">
-                          <a href={`/blog/category/${post.data.category.toLowerCase()}/`} class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
-                            {post.data.category}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div class="p-6 space-y-4 flex-1 flex flex-col">
-                    <div class="space-y-3 flex-1">
-                      <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                        {post.data.title}
-                      </h3>
-
-                      <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                        {post.data.description}
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    {post.data.tags && post.data.tags.length > 0 && (
-                      <div class="flex flex-wrap gap-1.5">
-                        {post.data.tags.slice(0, 2).map((tag) => (
-                          <a href={`/blog/tag/${tag.toLowerCase()}/`} class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
-                            #{tag}
-                          </a>
-                        ))}
-                        {post.data.tags.length > 2 && (
-                          <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
-                            +{post.data.tags.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Meta Info */}
-                    <div class="flex flex-col gap-2 pt-4 border-t border-border text-xs text-muted-foreground">
-                      <div class="flex items-center justify-between">
-                        <time class="flex items-center gap-1" title="Published">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {formatDate(post.data.pubDate)}
-                        </time>
-
-                        <span class="flex items-center gap-1">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {calculateReadingTime(post.body)} min
-                        </span>
-                      </div>
-                      
-                      {/* Show updated date if different from published date */}
-                      {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.pubDate.getTime() && (
-                        <time class="flex items-center gap-1 text-primary" title="Last updated">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Updated {formatDate(post.data.updatedDate)}
-                        </time>
-                      )}
-                    </div>
-
-                    {/* CTA Button */}
-                    <Button
-                      href={`/blog/${post.slug}/`}
-                      variant="ghost"
-                      size="sm"
-                      class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between mt-4"
-                    >
-                      Read Article
-                      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <BlogCard 
+                post={post} 
+                showImage={true}
+                showBadge={true}
+                badgeText={String(index + 1)}
+                variant="default"
+              />
             ))}
           </div>
 

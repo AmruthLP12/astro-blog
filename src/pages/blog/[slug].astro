@@ -1,4 +1,5 @@
 ---
+export const prerender = true
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import Button from "@/components/starwind/button/Button.astro";
@@ -7,6 +8,7 @@ import CardContent from "@/components/starwind/card/CardContent.astro";
 import Prose from "@/components/Prose.astro";
 import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
+import { Image } from "astro:assets";
 
 // Get all posts for "Other Articles"
 const allPosts = await getCollection("blog");
@@ -35,6 +37,23 @@ const wordsPerMinute = 200;
 const textContent = post.body || "";
 const wordCount = textContent.split(/\s+/).length;
 const readingTime = Math.ceil(wordCount / wordsPerMinute);
+
+// Helper function to format dates
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const formatDateShort = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 ---
 
 <BaseLayout title={post.data.title}>
@@ -118,49 +137,67 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
 
           <!-- Meta Information -->
           <div
-            class="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-4"
+            class="flex flex-col gap-4 text-sm text-muted-foreground pt-4"
           >
-            <div class="flex items-center gap-2">
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
-              <time>
-                {
-                  post.data.pubDate.toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                }
-              </time>
+            <div class="flex flex-wrap items-center gap-6">
+              <div class="flex items-center gap-2" title="Published">
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <time>
+                  {formatDate(post.data.pubDate)}
+                </time>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  ></path>
+                </svg>
+                <span>{readingTime} min read</span>
+              </div>
             </div>
 
-            <div class="flex items-center gap-2">
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                ></path>
-              </svg>
-              <span>{readingTime} min read</span>
-            </div>
+            {/* Show updated date if different from published date */}
+            {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.pubDate.getTime() && (
+              <div class="flex items-center gap-2 text-primary" title="Last updated">
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <time>
+                  Updated {formatDate(post.data.updatedDate)}
+                </time>
+              </div>
+            )}
           </div>
         </header>
 
@@ -189,8 +226,8 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       {
         post.data.heroImageLight && (
           <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 block dark:hidden">
-            <img
-              src={post.data.heroImageLight.src}
+            <Image
+              src={post.data.heroImageLight}
               alt={post.data.title}
               width={1200}
               height={630}
@@ -205,8 +242,8 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
       {
         post.data.heroImageDark && (
           <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 hidden dark:block">
-            <img
-              src={post.data.heroImageDark.src}
+            <Image
+              src={post.data.heroImageDark}
               alt={post.data.title}
               width={1200}
               height={630}
@@ -346,14 +383,19 @@ const readingTime = Math.ceil(wordCount / wordsPerMinute);
                     </p>
 
                     {/* Meta & CTA */}
-                    <div class="pt-4 border-t border-border space-y-4">
-                      <time class="block text-xs text-muted-foreground">
-                        {p.data.pubDate.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </time>
+                    <div class="pt-4 border-t border-border space-y-3">
+                      <div class="flex flex-col gap-2 text-xs text-muted-foreground">
+                        <time class="block" title="Published">
+                          {formatDateShort(p.data.pubDate)}
+                        </time>
+
+                        {/* Show updated date if different from published date */}
+                        {p.data.updatedDate && p.data.updatedDate.getTime() !== p.data.pubDate.getTime() && (
+                          <time class="block text-primary" title="Last updated">
+                            Updated {formatDateShort(p.data.updatedDate)}
+                          </time>
+                        )}
+                      </div>
 
                       <Button
                         href={`/blog/${p.slug}/`}
