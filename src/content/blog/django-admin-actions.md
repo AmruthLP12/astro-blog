@@ -3,7 +3,7 @@ title: "Django Admin Actions – Developer Documentation"
 description: "A **production-oriented, developer-focused guide** to using **Django Admin Actions** effectively. Covers bulk operations, confirmation workflows, permission checks, service-layer delegation, and best practices for scalable Django applications."
 category: backend
 pubDate: 2026-01-05 15:32
-updatedDate: 2026-01-05 15:32
+updatedDate: 2026-01-16 15:32
 heroImageDark: ./images/django_admin_actions.png
 heroImageLight: ./images/django_admin_actions.png
 tags:

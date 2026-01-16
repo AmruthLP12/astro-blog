@@ -6,11 +6,20 @@ const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
 import Button from "./starwind/button/Button.astro";
+import { Image } from "astro:assets";
 
 const calculateReadingTime = (body: string) => {
   const wordsPerMinute = 200;
   const wordCount = body.split(/\s+/).length;
   return Math.ceil(wordCount / wordsPerMinute);
+};
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 };
 ---
 
@@ -33,8 +42,8 @@ const calculateReadingTime = (body: string) => {
           <div class="flex flex-col lg:flex-row">
             {posts[0].data.heroImageLight && (
               <div class="relative lg:w-2/5 overflow-hidden">
-                <img
-                  src={posts[0].data.heroImageLight.src}
+                <Image
+                  src={posts[0].data.heroImageLight}
                   alt={posts[0].data.title}
                   width={600}
                   height={400}
@@ -42,8 +51,8 @@ const calculateReadingTime = (body: string) => {
                   class="w-full h-64 lg:h-full object-cover group-hover:scale-105 transition-transform duration-300 block dark:hidden"
                 />
                 {posts[0].data.heroImageDark && (
-                  <img
-                    src={posts[0].data.heroImageDark.src}
+                  <Image
+                    src={posts[0].data.heroImageDark}
                     alt={posts[0].data.title}
                     width={600}
                     height={400}
@@ -91,43 +100,61 @@ const calculateReadingTime = (body: string) => {
                 {posts[0].data.description}
               </p>
 
-              <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <time class="flex items-center gap-1.5">
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {posts[0].data.pubDate.toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </time>
-                <span class="flex items-center gap-1.5">
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {calculateReadingTime(posts[0].body)} min read
-                </span>
+              <div class="flex flex-col gap-3">
+                <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                  <time class="flex items-center gap-1.5" title="Published">
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    {formatDate(posts[0].data.pubDate)}
+                  </time>
+                  <span class="flex items-center gap-1.5">
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {calculateReadingTime(posts[0].body)} min read
+                  </span>
+                </div>
+
+                {/* Show updated date if different from published date */}
+                {posts[0].data.updatedDate && posts[0].data.updatedDate.getTime() !== posts[0].data.pubDate.getTime() && (
+                  <time class="flex items-center gap-1.5 text-sm text-primary" title="Last updated">
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    Updated {formatDate(posts[0].data.updatedDate)}
+                  </time>
+                )}
               </div>
 
               <Button
