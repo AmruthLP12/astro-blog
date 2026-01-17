@@ -20,6 +20,21 @@ tags: [
   "ubuntu",
   "installation",
   "troubleshooting",
+  "koha-lms",
+  "koha-installation",
+  "koha-setup",
+  "koha-configuration",
+  "koha-troubleshooting",
+  "koha-production-ready",
+  "koha-best-practices",
+  "koha-resources",
+  "devops",
+  "system-administration",
+  "linux",
+  "debian",
+  "ubuntu",
+  "library-systems",
+  "production-ready",
 ]
 ---
 
