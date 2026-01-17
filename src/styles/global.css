@@ -5,6 +5,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 10px;
+}
+
+.lightbox-hidden {
+  display: none;
+}
+
+
+
 pre code {
   @apply whitespace-pre;
 }

@@ -23,6 +23,8 @@ tags:
   - library-systems
   - devops
 
+heroImageLight: ./images/koha_email/koha_email_hero_light.jpg
+heroImageDark: ./images/koha_email/koha_email_hero_dark.jpg
 ---
 
 
@@ -322,3 +324,5 @@ To confirm the configuration:
 - Messaging settings apply **per category**, not globally. Each relevant category must be configured individually.  
 - If a patron does not have an email address, Koha will queue the message but will not be able to deliver it.  
 - Patron-level messaging preferences may override category defaults, depending on your system preference settings.
+
+---
