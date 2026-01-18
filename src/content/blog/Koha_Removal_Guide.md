@@ -2,7 +2,7 @@
 title: "Complete Koha Removal Guide: Clean Uninstall from Debian & Ubuntu Servers"
 description: "A production-focused, step-by-step guide to completely removing Koha LMS from Debian and Ubuntu systems. Covers stopping services, purging packages, cleaning databases, removing Apache/Nginx configs, and wiping residual files for a truly clean system reset."
 pubDate: 2026-01-18 12:27
-updatedDate: 2026-01-18 17:22
+updatedDate: 2026-01-18 17:29
 author: "Amruth L P"
 purpose: "This guide provides a safe, production-ready process for fully uninstalling Koha LMS from Linux servers. It ensures all services, packages, databases, cron jobs, and configuration files are removed to prevent conflicts during reinstallation or system repurposing."
 category: lms
@@ -74,7 +74,22 @@ sudo apt autoremove --purge
 APT will show you the list.
 If you see something you still need, abort with `Ctrl+C`.
 
-### 5. Drop Koha databases (MySQL / MariaDB)
+### 5.Remove Koha APT repository and GPG key
+This reverses the Koha repository setup and prevents future `apt update` warnings.
+
+```bash
+
+# Remove Koha APT source list
+sudo rm -f /etc/apt/sources.list.d/koha.list
+
+# Remove Koha GPG signing key
+sudo rm -f /usr/share/keyrings/koha.gpg
+
+# Refresh APT package index
+sudo apt update
+```
+
+### 6. Drop Koha databases (MySQL / MariaDB)
 ```bash
 sudo mysql -u root -p
 ```
@@ -92,7 +107,7 @@ EXIT;
 
 ```
 
-### 6. Delete directories
+### 7. Delete directories
 
 ```bash
 sudo rm -rf /etc/koha
@@ -101,7 +116,7 @@ sudo rm -rf /var/log/koha
 sudo rm -rf /usr/share/koha
 ```
 
-### 7. Remove web server config (choose your server)
+### 8. Remove web server config (choose your server)
 
 # Apache
 ```bash
@@ -119,12 +134,12 @@ sudo systemctl reload nginx
 
 ```
 
-### 8. Remove cron jobs
+### 9. Remove cron jobs
 ```bash
 sudo rm -f /etc/cron.d/koha-common
 ```
 
-### 9. Final verification
+### 10. Final verification
 ```bash
 dpkg -l | grep koha
 sudo mysql -u root -p -e "SHOW DATABASES;" | grep -i koha
@@ -133,7 +148,6 @@ sudo find /etc /var -iname "*koha*" 2>/dev/null
 If nothing appears, Koha is fully removed.
 
 ---
-
 ## ⚠️ All-in-One Interactive Cleanup Script (Advanced)
 
 > **DANGER ZONE**
@@ -207,9 +221,17 @@ echo "Running autoremove (review list)..."
 sudo apt autoremove --purge
 
 echo
-echo "Removing Koha APT repository..."
-sudo rm -f /etc/apt/sources.list.d/koha*
+echo "Removing Koha APT repository and GPG key..."
+
+# Remove Koha repo list
+sudo rm -f /etc/apt/sources.list.d/koha.list
+
+# Remove Koha signing key
+sudo rm -f /usr/share/keyrings/koha.gpg
+
+# Clean APT cache
 sudo apt update
+
 
 echo
 echo -n "MySQL/MariaDB root password: "
