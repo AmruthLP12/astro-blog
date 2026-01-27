@@ -3,7 +3,7 @@ title: "Configuring Email in Koha LMS: SMTP Setup, Cron Jobs & Production-Ready 
 
 description: "A production-focused, step-by-step guide to configuring email in Koha LMS using the built-in SMTP module and Linux terminal tools. Covers enabling email at the instance level, processing the message queue with cron jobs, and ensuring reliable delivery of patron notices, circulation alerts, and system notifications in a live Koha environment."
 
-author: "Amruth L P"
+author: amruth-l-p
 
 Purpose: "This document provides a clear, step-by-step, production-oriented guide to configure email delivery in Koha Integrated Library System (LMS) using the built-in SMTP module and Linux server tools. It follows best practices used in real-world library deployments and covers enabling instance-level email, automating message queue processing with cron jobs, and validating reliable delivery of patron notices and system notifications."
 

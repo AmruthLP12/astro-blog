@@ -1,7 +1,8 @@
 ---
-export const prerender = true
+export const prerender = true;
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 import Button from "@/components/starwind/button/Button.astro";
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
@@ -10,35 +11,86 @@ import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
 import { Image } from "astro:assets";
 
-// Get all posts for "Other Articles"
+// Get all posts and authors
 const allPosts = await getCollection("blog");
+const allAuthors = await getCollection("authors");
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
-  return posts.map((post) => ({
-    params: { slug: post.slug },
-    props: post,
-  }));
+
+  return Promise.all(
+    posts.map(async (post) => {
+      const author = post.data.author
+        ? await getEntry(post.data.author)
+        : null;
+
+      return {
+        params: { slug: post.slug },
+        props: { post, author },
+      };
+    })
+  );
 }
 
-const post = Astro.props;
+
+const { post, author } = Astro.props as {
+  post: CollectionEntry<"blog">;
+  author: CollectionEntry<"authors"> | null;
+};
 
 // Render markdown
 const { Content } = await post.render();
 
-// Filter out the current post and get 3 related articles
+// Filter out the current post and get related articles
+// Prioritize same category, then same tags, then most recent
 const otherPosts = allPosts
   .filter((p) => p.slug !== post.slug)
-  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
-  .slice(0, 3);
+  .map((p) => {
+    let relevanceScore = 0;
 
-// Calculate reading time (rough estimate: 200 words per minute)
+    // Same category = +10
+    if (post.data.category && p.data.category === post.data.category) {
+      relevanceScore += 10;
+    }
+
+    // Shared tags = +2 per tag
+    if (post.data.tags && p.data.tags) {
+      const sharedTags = post.data.tags.filter((tag) =>
+        p.data.tags?.includes(tag),
+      );
+      relevanceScore += sharedTags.length * 2;
+    }
+
+    // Same author = +5
+    if (author && p.data.author === post.data.author) {
+      relevanceScore += 5;
+    }
+
+    return { post: p, score: relevanceScore };
+  })
+  .sort((a, b) => {
+    // First by relevance, then by date
+    if (b.score !== a.score) return b.score - a.score;
+    return b.post.data.pubDate.getTime() - a.post.data.pubDate.getTime();
+  })
+  .slice(0, 3)
+  .map((item) => item.post);
+
+// Get more posts from the same author
+const authorPosts = author
+  ? allPosts
+      .filter((p) => p.slug !== post.slug && p.data.author === post.data.author)
+      .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+      .slice(0, 3)
+  : [];
+
+// Calculate reading time with better accuracy
 const wordsPerMinute = 200;
 const textContent = post.body || "";
-const wordCount = textContent.split(/\s+/).length;
+const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
 const readingTime = Math.ceil(wordCount / wordsPerMinute);
 
-// Helper function to format dates
+// Helper functions for dates
 const formatDate = (date: Date) => {
   return date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -54,9 +106,51 @@ const formatDateShort = (date: Date) => {
     year: "numeric",
   });
 };
+
+const formatDateISO = (date: Date) => {
+  return date.toISOString();
+};
+
+// Generate structured data for SEO
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.data.title,
+  description: post.data.description,
+  image: post.data.heroImageLight ? post.data.heroImageLight.src : undefined,
+  datePublished: formatDateISO(post.data.pubDate),
+  dateModified: post.data.updatedDate
+    ? formatDateISO(post.data.updatedDate)
+    : formatDateISO(post.data.pubDate),
+  author: author
+    ? {
+        "@type": "Person",
+        name: author.data.name,
+        url: author.data.website || `${Astro.site}author/${author.slug}`,
+      }
+    : undefined,
+  publisher: {
+    "@type": "Organization",
+    name: "Your Site Name", // Replace with your site name
+    logo: {
+      "@type": "ImageObject",
+      url: `${Astro.site}logo.png`, // Replace with your logo URL
+    },
+  },
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": Astro.url.href,
+  },
+};
 ---
 
 <BaseLayout title={post.data.title}>
+  <!-- Structured Data -->
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  />
+
   <main class="min-h-screen">
     <!-- Hero Section with Gradient Background -->
     <div
@@ -64,13 +158,21 @@ const formatDateShort = (date: Date) => {
     >
       <div class="max-w-6xl mx-auto px-6 py-16 md:py-24">
         <!-- Breadcrumb Navigation -->
-        <nav class="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <a href="/" class="hover:text-foreground transition-colors">Home</a>
+        <nav
+          class="mb-8 flex items-center gap-2 text-sm text-muted-foreground"
+          aria-label="Breadcrumb"
+        >
+          <a
+            href="/"
+            class="hover:text-foreground transition-colors focus:outline-none focus:underline"
+            >Home</a
+          >
           <svg
             class="w-4 h-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -78,7 +180,9 @@ const formatDateShort = (date: Date) => {
               stroke-width="2"
               d="M9 5l7 7-7 7"></path>
           </svg>
-          <a href="/blog" class="hover:text-foreground transition-colors"
+          <a
+            href="/blog"
+            class="hover:text-foreground transition-colors focus:outline-none focus:underline"
             >Blog</a
           >
           <svg
@@ -86,6 +190,7 @@ const formatDateShort = (date: Date) => {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -93,7 +198,8 @@ const formatDateShort = (date: Date) => {
               stroke-width="2"
               d="M9 5l7 7-7 7"></path>
           </svg>
-          <span class="text-foreground font-medium truncate max-w-50"
+          <span
+            class="text-foreground font-medium truncate max-w-xs md:max-w-md"
             >{post.data.title}</span
           >
         </nav>
@@ -102,12 +208,16 @@ const formatDateShort = (date: Date) => {
         {
           post.data.category && (
             <div class="mb-6">
-              <a href={`/blog/category/${post.data.category.toLowerCase()}/`} class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
+              <a
+                href={`/blog/category/${post.data.category.toLowerCase()}/`}
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
                 <svg
                   class="w-3.5 h-3.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     stroke-linecap="round"
@@ -116,8 +226,7 @@ const formatDateShort = (date: Date) => {
                     d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
                   />
                 </svg>
-                
-                  {post.data.category}
+                {post.data.category}
               </a>
             </div>
           )
@@ -131,21 +240,170 @@ const formatDateShort = (date: Date) => {
             {post.data.title}
           </h1>
 
-          <p class="text-xl md:text-2xl text-muted-foreground leading-relaxed">
+          <p
+            class="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-4xl"
+          >
             {post.data.description}
           </p>
 
+          <!-- Author Card (Enhanced) -->
+          {
+            author && (
+              <div class="flex items-start gap-4 p-6 rounded-xl bg-muted/30 border border-border/50 backdrop-blur-sm">
+                <a
+                  href={`/author/${author.slug}`}
+                  class="shrink-0 group focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
+                  aria-label={`View profile of ${author.data.name}`}
+                >
+                  {author.data.avatar ? (
+                    <Image
+                      src={author.data.avatar}
+                      alt={author.data.name}
+                      width={64}
+                      height={64}
+                      class="w-16 h-16 rounded-full object-cover border-2 border-border group-hover:border-primary transition-colors"
+                    />
+                  ) : (
+                    <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border group-hover:border-primary transition-colors">
+                      <svg
+                        class="w-8 h-8 text-primary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </a>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div class="min-w-0">
+                      <a
+                        href={`/author/${author.slug}`}
+                        class="font-semibold text-foreground hover:text-primary transition-colors focus:outline-none focus:underline"
+                      >
+                        {author.data.name}
+                      </a>
+                      {author.data.title && (
+                        <p class="text-sm text-muted-foreground">
+                          {author.data.title}
+                        </p>
+                      )}
+                      <p class="text-sm text-muted-foreground mt-2 line-clamp-2">
+                        {author.data.bio}
+                      </p>
+                    </div>
+
+                    {/* Author Social Links */}
+                    {(author.data.website ||
+                      author.data.twitter ||
+                      author.data.github ||
+                      author.data.portfolio) && (
+                      <div class="flex items-center gap-2 shrink-0">
+                        {author.data.website && (
+                          <a
+                            href={author.data.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-2 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                            aria-label={`Visit ${author.data.name}'s website`}
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                              />
+                            </svg>
+                          </a>
+                        )}
+                        {author.data.twitter && (
+                          <a
+                            href={author.data.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-2 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                            aria-label={`Follow ${author.data.name} on Twitter`}
+                          >
+                            <XIcon class="w-4 h-4" />
+                          </a>
+                        )}
+                        {author.data.github && (
+                          <a
+                            href={author.data.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-2 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                            aria-label={`View ${author.data.name}'s GitHub`}
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                            </svg>
+                          </a>
+                        )}
+                        {author.data.portfolio && (
+                          <a
+                            href={author.data.portfolio}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-2 rounded-md hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                            aria-label={`View ${author.data.name}'s portfolio`}
+                          >
+                            <svg
+                              class="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          }
+
           <!-- Meta Information -->
-          <div
-            class="flex flex-col gap-4 text-sm text-muted-foreground pt-4"
-          >
+          <div class="flex flex-col gap-4 text-sm text-muted-foreground pt-4">
             <div class="flex flex-wrap items-center gap-6">
-              <div class="flex items-center gap-2" title="Published">
+              <time
+                class="flex items-center gap-2"
+                datetime={formatDateISO(post.data.pubDate)}
+                title={`Published on ${formatDate(post.data.pubDate)}`}
+              >
                 <svg
-                  class="w-5 h-5"
+                  class="w-5 h-5 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     stroke-linecap="round"
@@ -154,17 +412,20 @@ const formatDateShort = (date: Date) => {
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                   ></path>
                 </svg>
-                <time>
-                  {formatDate(post.data.pubDate)}
-                </time>
-              </div>
+                <span class="sr-only">Published:</span>
+                {formatDate(post.data.pubDate)}
+              </time>
 
-              <div class="flex items-center gap-2">
+              <span
+                class="flex items-center gap-2"
+                title={`${readingTime} minute read`}
+              >
                 <svg
-                  class="w-5 h-5"
+                  class="w-5 h-5 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     stroke-linecap="round"
@@ -173,64 +434,77 @@ const formatDateShort = (date: Date) => {
                     d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                   ></path>
                 </svg>
-                <span>{readingTime} min read</span>
-              </div>
-              {post.data.author && (
-              <div class="flex items-center gap-2">
+                {readingTime} min read
+              </span>
+
+              <span class="flex items-center gap-2">
                 <svg
-                  class="w-5 h-5"
+                  class="w-5 h-5 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                   ></path>
                 </svg>
-                {post.data.author}
-            </div>
-            )}
+                {wordCount.toLocaleString()} words
+              </span>
 
-            {/* Show updated date if different from published date */}
-            {post.data.updatedDate && post.data.updatedDate.getTime() !== post.data.pubDate.getTime() && (
-              <div class="flex items-center gap-2 text-primary" title="Last updated">
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                <time>
-                  Updated {formatDate(post.data.updatedDate)}
-                </time>
-              </div>
-            )}
+              {/* Show updated date if different from published date */}
+              {
+                post.data.updatedDate &&
+                  post.data.updatedDate.getTime() !==
+                    post.data.pubDate.getTime() && (
+                    <time
+                      class="flex items-center gap-2 text-primary"
+                      datetime={formatDateISO(post.data.updatedDate)}
+                      title={`Last updated on ${formatDate(post.data.updatedDate)}`}
+                    >
+                      <svg
+                        class="w-5 h-5 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      <span class="sr-only">Last updated:</span>
+                      Updated {formatDate(post.data.updatedDate)}
+                    </time>
+                  )
+              }
+            </div>
           </div>
         </header>
 
         <!-- Tags -->
         {
           post.data.tags && post.data.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2 pt-6">
+            <div
+              class="flex flex-wrap gap-2 pt-6"
+              role="list"
+              aria-label="Article tags"
+            >
               {post.data.tags.map((tag) => (
-                
-                  <a
-                    href={`/blog/tag/${tag.toLowerCase()}/`}
-                    class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-md bg-muted/50 text-muted-foreground hover:bg-muted transition border border-border/50"
-                  >
-                    <span class="text-primary">#</span>
-                    {tag}
-                  </a>
+                <a
+                  href={`/blog/tag/${tag.toLowerCase()}/`}
+                  class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-md bg-muted/50 text-muted-foreground hover:bg-muted transition border border-border/50 hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  role="listitem"
+                >
+                  <span class="text-primary">#</span>
+                  {tag}
+                </a>
               ))}
             </div>
           )
@@ -239,43 +513,43 @@ const formatDateShort = (date: Date) => {
     </div>
 
     <!-- Hero Images -->
-    <div class="max-w-6xl mx-auto px-6 -mt-8 mb-16">
-      {
-        post.data.heroImageLight && (
-          <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 block dark:hidden">
-            <Image
-              src={post.data.heroImageLight}
-              alt={post.data.title}
-              width={1200}
-              height={630}
-              class="w-full h-auto"
-              loading="eager"
-            />
-            <div class="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl" />
-          </div>
-        )
-      }
+    {
+      (post.data.heroImageLight || post.data.heroImageDark) && (
+        <div class="max-w-6xl mx-auto px-6 -mt-8 mb-16">
+          {post.data.heroImageLight && (
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 block dark:hidden">
+              <Image
+                src={post.data.heroImageLight}
+                alt={post.data.title}
+                width={1200}
+                height={630}
+                class="w-full h-auto"
+                loading="eager"
+              />
+              <div class="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl pointer-events-none" />
+            </div>
+          )}
 
-      {
-        post.data.heroImageDark && (
-          <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 hidden dark:block">
-            <Image
-              src={post.data.heroImageDark}
-              alt={post.data.title}
-              width={1200}
-              height={630}
-              class="w-full h-auto"
-              loading="eager"
-            />
-            <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl" />
-          </div>
-        )
-      }
-    </div>
+          {post.data.heroImageDark && (
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 hidden dark:block">
+              <Image
+                src={post.data.heroImageDark}
+                alt={post.data.title}
+                width={1200}
+                height={630}
+                class="w-full h-auto"
+                loading="eager"
+              />
+              <div class="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
+            </div>
+          )}
+        </div>
+      )
+    }
 
     <!-- Article Content -->
     <article class="max-w-6xl mx-auto px-6 pb-24">
-      <!-- Table of Contents (Optional - can be generated from headings) -->
+      <!-- Table of Contents Placeholder -->
       <aside class="mb-12 p-6 rounded-xl bg-muted/30 border border-border/50">
         <h2
           class="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2"
@@ -285,6 +559,7 @@ const formatDateShort = (date: Date) => {
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -302,9 +577,7 @@ const formatDateShort = (date: Date) => {
       <!-- Main Content with Enhanced Typography -->
       <div class="prose-wrapper">
         <Prose>
-          <Content
-          
-          />
+          <Content />
         </Prose>
       </div>
 
@@ -323,6 +596,7 @@ const formatDateShort = (date: Date) => {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   stroke-linecap="round"
@@ -364,6 +638,251 @@ const formatDateShort = (date: Date) => {
       </footer>
     </article>
 
+    <!-- Author Bio Section (Enhanced) -->
+    {
+      author && (
+        <section class="bg-muted/20 py-16">
+          <div class="max-w-4xl mx-auto px-6">
+            <Card class="border-2 hover:border-primary/20 transition-colors">
+              <CardContent class="p-8">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <a
+                    href={`/author/${author.slug}`}
+                    class="shrink-0 group focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
+                  >
+                    {author.data.avatar ? (
+                      <Image
+                        src={author.data.avatar}
+                        alt={author.data.name}
+                        width={120}
+                        height={120}
+                        class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-border group-hover:border-primary transition-colors"
+                      />
+                    ) : (
+                      <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary/10 flex items-center justify-center border-4 border-border group-hover:border-primary transition-colors">
+                        <svg
+                          class="w-12 h-12 md:w-16 md:h-16 text-primary"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </a>
+
+                  <div class="flex-1 space-y-4">
+                    <div>
+                      <h3 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                        About the Author
+                      </h3>
+                      <a
+                        href={`/author/${author.slug}`}
+                        class="text-2xl font-bold hover:text-primary transition-colors focus:outline-none focus:underline"
+                      >
+                        {author.data.name}
+                      </a>
+                      {author.data.title && (
+                        <p class="text-muted-foreground mt-1">
+                          {author.data.title}
+                        </p>
+                      )}
+                    </div>
+
+                    <p class="text-muted-foreground leading-relaxed">
+                      {author.data.bio}
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                      {author.data.website && (
+                        <a
+                          href={author.data.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-muted hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                            />
+                          </svg>
+                          Website
+                        </a>
+                      )}
+                      {author.data.twitter && (
+                        <a
+                          href={author.data.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-muted hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <XIcon class="w-4 h-4" />
+                          Twitter
+                        </a>
+                      )}
+                      {author.data.github && (
+                        <a
+                          href={author.data.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-muted hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                          </svg>
+                          GitHub
+                        </a>
+                      )}
+                      {author.data.portfolio && (
+                        <a
+                          href={author.data.portfolio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-muted hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                            />
+                          </svg>
+                          Portfolio
+                        </a>
+                      )}
+                      <Button
+                        href={`/author/${author.slug}`}
+                        variant="outline"
+                        size="sm"
+                        class="ml-auto"
+                      >
+                        View All Posts
+                        <svg
+                          class="w-4 h-4 ml-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- More from Author Section -->
+    {
+      author && authorPosts.length > 0 && (
+        <section class="bg-background py-16">
+          <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-12">
+              <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                More from {author.data.name}
+              </h2>
+              <p class="text-muted-foreground">
+                Explore other articles by this author
+              </p>
+            </div>
+
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {authorPosts.map((p) => (
+                <Card class="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20 h-full">
+                  <CardContent class="h-full flex flex-col space-y-4 p-6">
+                    {p.data.category && (
+                      <span class="inline-flex self-start items-center px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
+                        {p.data.category}
+                      </span>
+                    )}
+
+                    <a
+                      href={`/blog/${p.slug}/`}
+                      class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                    >
+                      <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                        {p.data.title}
+                      </h3>
+                    </a>
+
+                    <p class="text-muted-foreground text-sm line-clamp-3 flex-1">
+                      {p.data.description}
+                    </p>
+
+                    <div class="pt-4 border-t border-border space-y-3">
+                      <time
+                        class="block text-xs text-muted-foreground"
+                        datetime={formatDateISO(p.data.pubDate)}
+                      >
+                        {formatDateShort(p.data.pubDate)}
+                      </time>
+
+                      <Button
+                        href={`/blog/${p.slug}/`}
+                        variant="ghost"
+                        size="sm"
+                        class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
+                      >
+                        Read Article
+                        <svg
+                          class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )
+    }
+
     <!-- Related Articles Section -->
     {
       otherPosts.length > 0 && (
@@ -371,47 +890,56 @@ const formatDateShort = (date: Date) => {
           <div class="max-w-6xl mx-auto px-6">
             <div class="text-center mb-12">
               <h2 class="text-3xl md:text-4xl font-bold mb-4">
-                Continue Reading
+                Related Articles
               </h2>
               <p class="text-muted-foreground">
-                Explore more articles you might find interesting
+                Continue exploring topics you might find interesting
               </p>
             </div>
 
             <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {otherPosts.map((p) => (
-                <Card class="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20">
+                <Card class="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20 h-full">
                   <CardContent class="h-full flex flex-col space-y-4 p-6">
-                    {/* Category Badge */}
                     {p.data.category && (
                       <span class="inline-flex self-start items-center px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
                         {p.data.category}
                       </span>
                     )}
 
-                    {/* Title */}
-                    <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                      {p.data.title}
-                    </h3>
+                    <a
+                      href={`/blog/${p.slug}/`}
+                      class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                    >
+                      <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                        {p.data.title}
+                      </h3>
+                    </a>
 
-                    {/* Description */}
                     <p class="text-muted-foreground text-sm line-clamp-3 flex-1">
                       {p.data.description}
                     </p>
 
-                    {/* Meta & CTA */}
                     <div class="pt-4 border-t border-border space-y-3">
                       <div class="flex flex-col gap-2 text-xs text-muted-foreground">
-                        <time class="block" title="Published">
+                        <time
+                          datetime={formatDateISO(p.data.pubDate)}
+                          title={`Published on ${formatDateShort(p.data.pubDate)}`}
+                        >
                           {formatDateShort(p.data.pubDate)}
                         </time>
 
-                        {/* Show updated date if different from published date */}
-                        {p.data.updatedDate && p.data.updatedDate.getTime() !== p.data.pubDate.getTime() && (
-                          <time class="block text-primary" title="Last updated">
-                            Updated {formatDateShort(p.data.updatedDate)}
-                          </time>
-                        )}
+                        {p.data.updatedDate &&
+                          p.data.updatedDate.getTime() !==
+                            p.data.pubDate.getTime() && (
+                            <time
+                              class="text-primary"
+                              datetime={formatDateISO(p.data.updatedDate)}
+                              title={`Last updated on ${formatDateShort(p.data.updatedDate)}`}
+                            >
+                              Updated {formatDateShort(p.data.updatedDate)}
+                            </time>
+                          )}
                       </div>
 
                       <Button
@@ -426,6 +954,7 @@ const formatDateShort = (date: Date) => {
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path
                             stroke-linecap="round"
@@ -441,7 +970,6 @@ const formatDateShort = (date: Date) => {
               ))}
             </div>
 
-            {/* View All Button */}
             <div class="text-center mt-12">
               <Button href="/blog" variant="outline" size="lg">
                 View All Articles
@@ -450,6 +978,7 @@ const formatDateShort = (date: Date) => {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     stroke-linecap="round"
@@ -465,7 +994,7 @@ const formatDateShort = (date: Date) => {
       )
     }
 
-    <!-- Newsletter CTA (Optional) -->
+    <!-- Newsletter CTA -->
     <section class="max-w-3xl mx-auto px-6 py-24">
       <Card
         class="bg-linear-to-br from-primary/5 via-primary/10 to-background border-2 border-primary/20"
@@ -479,6 +1008,7 @@ const formatDateShort = (date: Date) => {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -493,7 +1023,7 @@ const formatDateShort = (date: Date) => {
             Get notified when I publish new content. No spam, just quality
             articles delivered to your inbox.
           </p>
-          <Button variant="primary" size="lg"> Subscribe to Newsletter </Button>
+          <Button variant="primary" size="lg">Subscribe to Newsletter</Button>
         </CardContent>
       </Card>
     </section>

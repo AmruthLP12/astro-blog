@@ -2,6 +2,7 @@
 title: "Koha LMS Installation Guide on Linux (Debian/Ubuntu)"
 description: "This document provides a **clear, step-by-step, production-oriented guide** to install **Koha Integrated Library Management System (LMS)** on a Linux server, specifically **Debian or Ubuntu**. Koha officially recommends Debian-based systems and this guide follows best practices used in real-world library deployments."
 category: lms
+author: amruth-l-p
 pubDate: 2026-01-04 20:10
 updatedDate: 2026-01-18 12:27
 heroImageDark: ./images/Koha_install.jpg

@@ -2,6 +2,7 @@
 title: "Hello Astro"
 description: "Setting up my first Astro-powered blog"
 category: personal
+author: amruth-l-p
 pubDate: 2025-01-01 14:00
 updatedDate: 2025-01-01 14:00
 heroImageDark: ./images/astro-logo-dark-gradient.png

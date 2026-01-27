@@ -1,29 +1,20 @@
 ---
+import type { CollectionEntry } from "astro:content";
+
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
 import Button from "@/components/starwind/button/Button.astro";
 import { Image } from "astro:assets";
 
 interface Props {
-  post: {
-    slug: string;
-    body: string;
-    data: {
-      title: string;
-      description: string;
-      author?: string;
-      pubDate: Date;
-      updatedDate?: Date;
-      category?: string;
-      tags?: string[];
-      heroImageLight?: any;
-      heroImageDark?: any;
-    };
+  post: CollectionEntry<"blog"> & {
+    resolvedAuthor?: CollectionEntry<"authors"> | null;
   };
   showImage?: boolean;
   showBadge?: boolean;
   badgeText?: string;
   variant?: "default" | "compact";
+  priority?: boolean; // For image loading optimization
 }
 
 const {
@@ -32,16 +23,18 @@ const {
   showBadge = false,
   badgeText,
   variant = "default",
+  priority = false,
 } = Astro.props;
 
-// Calculate reading time
+// Calculate reading time with more accurate estimation
 const calculateReadingTime = (body: string) => {
   const wordsPerMinute = 200;
-  const wordCount = body.split(/\s+/).length;
-  return Math.ceil(wordCount / wordsPerMinute);
+  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  return minutes;
 };
 
-// Format dates
+// Format dates with better internationalization support
 const formatDate = (date: Date) => {
   return date.toLocaleDateString("en-US", {
     month: "short",
@@ -56,22 +49,45 @@ const formatDateWithYear = (date: Date) => {
     year: "numeric",
   });
 };
+
+// Format time for screen readers
+const formatDateISO = (date: Date) => {
+  return date.toISOString();
+};
+
+// Check if post is recently updated (within 7 days)
+const isRecentlyUpdated = (updatedDate?: Date, pubDate?: Date) => {
+  if (!updatedDate || !pubDate) return false;
+  const daysSinceUpdate = Math.floor(
+    (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const isDifferent = updatedDate.getTime() !== pubDate.getTime();
+  return isDifferent && daysSinceUpdate <= 7;
+};
+
+const readingTime = calculateReadingTime(post.body);
+const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
 ---
 
 <Card
-  class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden h-full"
+  class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden h-full focus-within:ring-2 focus-within:ring-primary/50"
 >
   <CardContent class="p-0 h-full flex flex-col">
     {/* Hero Image */}
     {
       showImage && post.data.heroImageLight && (
-        <div class="relative h-48 overflow-hidden">
+        <a
+          href={`/blog/${post.slug}/`}
+          class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+          aria-label={`View article: ${post.data.title}`}
+        >
           <Image
             src={post.data.heroImageLight}
             alt={post.data.title}
             width={400}
             height={250}
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 block dark:hidden"
+            loading={priority ? "eager" : "lazy"}
+            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 block dark:hidden"
           />
           {post.data.heroImageDark && (
             <Image
@@ -79,15 +95,16 @@ const formatDateWithYear = (date: Date) => {
               alt={post.data.title}
               width={400}
               height={250}
-              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 hidden dark:block"
+              loading={priority ? "eager" : "lazy"}
+              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 hidden dark:block"
             />
           )}
-          <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+          <div class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
 
           {/* Badge on image */}
           {showBadge && badgeText && (
-            <div class="absolute top-3 left-3">
-              <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-bold rounded-full bg-primary text-primary-foreground shadow-lg">
+            <div class="absolute top-3 left-3 z-10">
+              <span class="inline-flex items-center justify-center px-3 py-1 text-xs font-bold rounded-full bg-primary text-primary-foreground shadow-lg animate-pulse">
                 {badgeText}
               </span>
             </div>
@@ -96,17 +113,44 @@ const formatDateWithYear = (date: Date) => {
           {/* Category Badge */}
           {post.data.category && (
             <div
-              class:list={["absolute top-3", showBadge ? "right-3" : "left-3"]}
+              class:list={[
+                "absolute top-3 z-10",
+                showBadge ? "right-3" : "left-3",
+              ]}
             >
-              <a
-                href={`/blog/category/${post.data.category.toLowerCase()}/`}
-                class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50 hover:bg-background transition-colors"
+              <span
+                class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50 hover:bg-background transition-colors cursor-pointer"
+                onclick={`event.preventDefault(); event.stopPropagation(); window.location.href='/blog/category/${post.data.category.toLowerCase()}/';`}
+                role="link"
+                tabindex="0"
+                onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}"
               >
                 {post.data.category}
-              </a>
+              </span>
             </div>
           )}
-        </div>
+
+          {/* New/Updated indicator */}
+          {isNew && (
+            <div class="absolute bottom-3 right-3 z-10">
+              <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-500/90 text-white backdrop-blur-sm">
+                <svg
+                  class="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                Updated
+              </span>
+            </div>
+          )}
+        </a>
       )
     }
 
@@ -115,13 +159,33 @@ const formatDateWithYear = (date: Date) => {
       {/* Category badge when no image */}
       {
         !showImage && post.data.category && (
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
+          <div class="flex items-center gap-2 flex-wrap">
+            <a
+              href={`/blog/category/${post.data.category.toLowerCase()}/`}
+              class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
               {post.data.category}
-            </span>
+            </a>
             {showBadge && badgeText && (
               <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary text-primary-foreground">
                 {badgeText}
+              </span>
+            )}
+            {isNew && (
+              <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                <svg
+                  class="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                Updated
               </span>
             )}
           </div>
@@ -129,14 +193,19 @@ const formatDateWithYear = (date: Date) => {
       }
 
       <div class="space-y-3 flex-1">
-        <h3
-          class:list={[
-            "font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2",
-            variant === "compact" ? "text-lg" : "text-xl",
-          ]}
+        <a
+          href={`/blog/${post.slug}/`}
+          class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
         >
-          {post.data.title}
-        </h3>
+          <h3
+            class:list={[
+              "font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2",
+              variant === "compact" ? "text-lg" : "text-xl",
+            ]}
+          >
+            {post.data.title}
+          </h3>
+        </a>
 
         <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
           {post.data.description}
@@ -146,19 +215,23 @@ const formatDateWithYear = (date: Date) => {
       {/* Tags */}
       {
         post.data.tags && post.data.tags.length > 0 && (
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-wrap gap-1.5" role="list" aria-label="Tags">
             {post.data.tags
               .slice(0, variant === "compact" ? 2 : 3)
               .map((tag) => (
                 <a
                   href={`/blog/tag/${tag.toLowerCase()}/`}
-                  class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted transition-colors"
+                  class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted hover:border-border transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  role="listitem"
                 >
                   #{tag}
                 </a>
               ))}
             {post.data.tags.length > (variant === "compact" ? 2 : 3) && (
-              <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
+              <span
+                class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50"
+                title={`${post.data.tags.length - (variant === "compact" ? 2 : 3)} more tags`}
+              >
                 +{post.data.tags.length - (variant === "compact" ? 2 : 3)}
               </span>
             )}
@@ -169,13 +242,18 @@ const formatDateWithYear = (date: Date) => {
       {/* Meta Info */}
       <div class="pt-4 border-t border-border space-y-3">
         <div class="flex flex-col gap-2 text-xs text-muted-foreground">
-          <div class="flex items-center justify-between">
-            <time class="flex items-center gap-1" title="Published">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <time
+              class="flex items-center gap-1"
+              datetime={formatDateISO(post.data.pubDate)}
+              title={`Published on ${formatDateWithYear(post.data.pubDate)}`}
+            >
               <svg
-                class="w-3.5 h-3.5"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   stroke-linecap="round"
@@ -184,6 +262,7 @@ const formatDateWithYear = (date: Date) => {
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                 ></path>
               </svg>
+              <span class="sr-only">Published:</span>
               {
                 variant === "compact"
                   ? formatDate(post.data.pubDate)
@@ -191,12 +270,17 @@ const formatDateWithYear = (date: Date) => {
               }
             </time>
 
-            <span class="flex items-center gap-1">
+            <span
+              class="flex items-center gap-1"
+              title={`${readingTime} minute read`}
+              aria-label={`${readingTime} minute read`}
+            >
               <svg
-                class="w-3.5 h-3.5"
+                class="w-3.5 h-3.5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   stroke-linecap="round"
@@ -204,29 +288,36 @@ const formatDateWithYear = (date: Date) => {
                   stroke-width="2"
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              {calculateReadingTime(post.body)} min
+              {readingTime} min
             </span>
+
             {
-              post.data.author && (
-                <span class="flex items-center gap-1">
+              post.resolvedAuthor && (
+                <a
+                  href={`/author/${post.resolvedAuthor.slug}`}
+                  class="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1 -mx-1"
+                  aria-label={`View posts by ${post.resolvedAuthor.data.name}`}
+                >
                   <svg
-                    class="w-3.5 h-3.5"
+                    class="w-3.5 h-3.5 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    ></path>
+                    />
                   </svg>
-                  {post.data.author}
-                </span>
+                  <span class="truncate max-w-30">
+                    {post.resolvedAuthor.data.name}
+                  </span>
+                </a>
               )
             }
-            
           </div>
 
           {/* Show updated date if different from published date */}
@@ -235,14 +326,16 @@ const formatDateWithYear = (date: Date) => {
               post.data.updatedDate.getTime() !==
                 post.data.pubDate.getTime() && (
                 <time
-                  class="flex items-center gap-1 text-primary"
-                  title="Last updated"
+                  class="flex items-center gap-1 text-primary text-[0.65rem]"
+                  datetime={formatDateISO(post.data.updatedDate)}
+                  title={`Last updated on ${formatDateWithYear(post.data.updatedDate)}`}
                 >
                   <svg
-                    class="w-3.5 h-3.5"
+                    class="w-3.5 h-3.5 shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       stroke-linecap="round"
@@ -251,6 +344,7 @@ const formatDateWithYear = (date: Date) => {
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
+                  <span class="sr-only">Last updated:</span>
                   Updated{" "}
                   {variant === "compact"
                     ? formatDate(post.data.updatedDate)
@@ -265,14 +359,16 @@ const formatDateWithYear = (date: Date) => {
           href={`/blog/${post.slug}/`}
           variant="ghost"
           size="sm"
-          class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
+          class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between focus:ring-2 focus:ring-primary"
+          aria-label={`Read full article: ${post.data.title}`}
         >
-          Read Article
+          <span>Read Article</span>
           <svg
             class="w-4 h-4 group-hover:translate-x-1 transition-transform"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -285,3 +381,18 @@ const formatDateWithYear = (date: Date) => {
     </div>
   </CardContent>
 </Card>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{post.data.title}",
+  "author": {
+    "@type": "Person",
+    "name": "{post.resolvedAuthor?.data.name}"
+  },
+  "datePublished": "{formatDateISO(post.data.pubDate)}",
+  "dateModified": "{formatDateISO(post.data.updatedDate || post.data.pubDate)}"
+}
+</script>
