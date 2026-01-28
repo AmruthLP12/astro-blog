@@ -2,10 +2,10 @@
 name: "Amruth L P"
 title: "Full Stack Developer"
 bio: "Building tools with Astro and Next.js"
-website: "https://amruth.dev"
-github: "https://github.com/amruth"
-twitter: "https://twitter.com/amruth"
-portfolio: "https://amruth.dev"
+website: "https://amruthlp.vercel.app"
+github: "https://github.com/amruthlp12"
+portfolio: "https://amruthlp.vercel.app"
+linkedin: "https://www.linkedin.com/in/amruthlp"
 # avatar: "../assets/avatars/amruth.png"
 ---
 

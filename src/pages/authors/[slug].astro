@@ -1,8 +1,6 @@
 ---
-
-
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
@@ -10,54 +8,65 @@ import Button from "@/components/starwind/button/Button.astro";
 import XIcon from "@/components/icons/XIcon.astro";
 import { Image } from "astro:assets";
 
-const { author, posts } = Astro.props as {
-  author: CollectionEntry<"authors">;
-  posts: CollectionEntry<"blog">[];
-};
-
-console.log("Author:", author);
-// console.log("Posts for this author:", allPosts.filter(p => p.data.author === author.slug));
-
-
-
-
 export async function getStaticPaths() {
   const allAuthors = await getCollection("authors");
   const allPosts = await getCollection("blog");
 
-  
+  return Promise.all(
+    allAuthors.map(async (author) => {
+      const authorPosts = [];
 
-  return allAuthors.map((author) => {
-    // Filter posts whose author matches this author
-    const authorPosts = allPosts.filter(
-  (post) => post.data.author.id === author.id
-);
+      for (const post of allPosts) {
+        if (!post.data.author) continue;
 
-    return {
-      params: { slug: author.slug },
-      props: { author, posts: authorPosts },
-    };
-  });
+        const resolvedAuthor = await getEntry(post.data.author);
+
+        if (resolvedAuthor?.id === author.id) {
+          authorPosts.push(post);
+        }
+      }
+
+      return {
+        params: { slug: author.slug },
+        props: { author, posts: authorPosts },
+      };
+    })
+  );
 }
 
+const { author, posts = [] } = Astro.props as {
+  author: CollectionEntry<"authors">;
+  posts: CollectionEntry<"blog">[];
+};
 
-
-
-
-
-
-// Sort posts by date (newest first)
-const sortedPosts = posts.sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
-);
+// Sort posts by update date first, then publication date (newest first)
+const sortedPosts = [...posts].sort((a, b) => {
+  const dateA = a.data.updatedDate || a.data.pubDate;
+  const dateB = b.data.updatedDate || b.data.pubDate;
+  return dateB.getTime() - dateA.getTime();
+});
 
 // Calculate author statistics
 const totalPosts = posts.length;
 const totalWords = posts.reduce((sum, post) => {
+  // Safely handle post body - it might be undefined
+  if (!post.body) return sum;
   const wordCount = post.body.trim().split(/\s+/).filter(Boolean).length;
   return sum + wordCount;
 }, 0);
-const averageReadingTime = Math.ceil(totalWords / (200 * totalPosts || 1));
+const averageReadingTime = totalPosts > 0 ? Math.ceil(totalWords / (200 * totalPosts)) : 0;
+
+// Get author's extended bio from body content if available
+const authorExtendedBio = author.body?.trim() || null;
+
+// Get recently updated posts (updated within last 30 days)
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+const recentlyUpdatedPosts = posts.filter((post) => {
+  if (!post.data.updatedDate) return false;
+  return post.data.updatedDate > thirtyDaysAgo && 
+         post.data.updatedDate.getTime() !== post.data.pubDate.getTime();
+}).length;
 
 // Get unique categories and tags
 const categories = [
@@ -77,14 +86,10 @@ const topTags = Object.entries(tagCounts)
 
 // Get date range
 const firstPost = posts.length
-  ? new Date(
-      Math.min(...posts.map((p) => p.data.pubDate.getTime()))
-    )
+  ? new Date(Math.min(...posts.map((p) => p.data.pubDate.getTime())))
   : null;
 const latestPost = posts.length
-  ? new Date(
-      Math.max(...posts.map((p) => p.data.pubDate.getTime()))
-    )
+  ? new Date(Math.max(...posts.map((p) => (p.data.updatedDate || p.data.pubDate).getTime())))
   : null;
 
 // Helper functions
@@ -109,15 +114,26 @@ const formatDateISO = (date: Date) => {
 };
 
 const calculateReadingTime = (body: string) => {
+  if (!body) return 0;
   const wordsPerMinute = 200;
   const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
   return Math.ceil(wordCount / wordsPerMinute);
 };
 
-// Group posts by year for archive
+const isRecentlyUpdated = (updatedDate?: Date, pubDate?: Date) => {
+  if (!updatedDate || !pubDate) return false;
+  const daysSinceUpdate = Math.floor(
+    (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const isDifferent = updatedDate.getTime() !== pubDate.getTime();
+  return isDifferent && daysSinceUpdate <= 7;
+};
+
+// Group posts by year (using latest date - either updated or published)
 const postsByYear = sortedPosts.reduce(
   (acc, post) => {
-    const year = post.data.pubDate.getFullYear();
+    const relevantDate = post.data.updatedDate || post.data.pubDate;
+    const year = relevantDate.getFullYear();
     if (!acc[year]) acc[year] = [];
     acc[year].push(post);
     return acc;
@@ -128,7 +144,7 @@ const years = Object.keys(postsByYear)
   .map(Number)
   .sort((a, b) => b - a);
 
-// Featured posts (most recent 3)
+// Featured posts (most recent 3 by update/publish date)
 const featuredPosts = sortedPosts.slice(0, 3);
 
 // Generate structured data for SEO
@@ -147,6 +163,7 @@ const structuredData = {
       author.data.github,
       author.data.twitter,
       author.data.portfolio,
+      author.data.linkedin,
     ].filter(Boolean),
   },
   breadcrumb: {
@@ -182,8 +199,6 @@ const structuredData = {
   <!-- Structured Data -->
   <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
 
-  
-
   <main class="min-h-screen">
     <!-- Hero Section -->
     <div
@@ -192,17 +207,13 @@ const structuredData = {
       <!-- Decorative Background Elements -->
       <div
         class="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
-      >
-      
-      </div>
+      ></div>
       <div
         class="absolute top-20 right-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none"
-      >
-      </div>
+      ></div>
       <div
         class="absolute bottom-20 left-20 w-96 h-96 bg-primary/3 rounded-full blur-3xl pointer-events-none"
-      >
-      </div>
+      ></div>
 
       <div class="max-w-6xl mx-auto px-6 py-16 md:py-24 relative">
         <!-- Breadcrumb Navigation -->
@@ -304,6 +315,15 @@ const structuredData = {
               {author.data.bio}
             </p>
 
+            {/* Extended bio from markdown body */}
+            {
+              authorExtendedBio && (
+                <p class="text-base text-muted-foreground/90 leading-relaxed max-w-3xl italic border-l-4 border-primary/30 pl-4">
+                  {authorExtendedBio}
+                </p>
+              )
+            }
+
             <!-- Social Links -->
             {
               (author.data.website ||
@@ -336,6 +356,32 @@ const structuredData = {
                       Website
                     </Button>
                   )}
+                  {author.data.linkedin && (
+                    <Button
+                      href={author.data.linkedin}
+                      variant="outline"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="gap-2"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"
+                        />
+                        <circle cx="4" cy="4" r="2" stroke="currentColor" />
+                      </svg>
+                      LinkedIn
+                    </Button>
+                  )}  
                   {author.data.twitter && (
                     <Button
                       href={author.data.twitter}
@@ -402,7 +448,7 @@ const structuredData = {
       totalPosts > 0 && (
         <section class="bg-muted/30 border-y border-border">
           <div class="max-w-6xl mx-auto px-6 py-12">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8">
               <!-- Total Posts -->
               <div class="text-center">
                 <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
@@ -428,6 +474,16 @@ const structuredData = {
                 </div>
                 <div class="text-sm text-muted-foreground">
                   {categories.length === 1 ? "Category" : "Categories"}
+                </div>
+              </div>
+
+              <!-- Recently Updated -->
+              <div class="text-center">
+                <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
+                  {recentlyUpdatedPosts}
+                </div>
+                <div class="text-sm text-muted-foreground">
+                  Recent Updates
                 </div>
               </div>
 
@@ -490,110 +546,153 @@ const structuredData = {
                 </div>
 
                 <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                  {featuredPosts.map((post) => (
-                    <Card class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden h-full">
-                      <CardContent class="p-0 h-full flex flex-col">
-                        {/* Hero Image */}
-                        {post.data.heroImageLight && (
-                          <a
-                            href={`/blog/${post.slug}/`}
-                            class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
-                            aria-label={`View article: ${post.data.title}`}
-                          >
-                            <Image
-                              src={post.data.heroImageLight}
-                              alt={ post.data.title}
-                              width={400}
-                              height={250}
-                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 block dark:hidden"
-                            />
-                            {post.data.heroImageDark && (
-                              <Image
-                                src={post.data.heroImageDark}
-                                alt={ post.data.title}
-                                width={400}
-                                height={250}
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 hidden dark:block"
-                              />
-                            )}
-                            <div class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
-
-                            {/* Category Badge */}
-                            {post.data.category && (
-                              <div class="absolute top-3 left-3 z-10">
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
-                                  {post.data.category}
-                                </span>
-                              </div>
-                            )}
-                          </a>
-                        )}
-
-                        {/* Content */}
-                        <div class="p-6 space-y-4 flex-1 flex flex-col">
-                          {/* Category when no image */}
-                          {!post.data.heroImageLight && post.data.category && (
-                            <span class="inline-flex self-start items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
-                              {post.data.category}
-                            </span>
-                          )}
-
-                          <div class="space-y-3 flex-1">
+                  {featuredPosts.map((post) => {
+                    const isUpdated = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
+                    return (
+                      <Card class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden h-full">
+                        <CardContent class="p-0 h-full flex flex-col">
+                          {/* Hero Image */}
+                          {post.data.heroImageLight && (
                             <a
                               href={`/blog/${post.slug}/`}
-                              class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                              class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+                              aria-label={`View article: ${post.data.title}`}
                             >
-                              <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                                {post.data.title}
-                              </h3>
+                              <Image
+                                src={post.data.heroImageLight}
+                                alt={post.data.title}
+                                width={400}
+                                height={250}
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 block dark:hidden"
+                              />
+                              {post.data.heroImageDark && (
+                                <Image
+                                  src={post.data.heroImageDark}
+                                  alt={post.data.title}
+                                  width={400}
+                                  height={250}
+                                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 hidden dark:block"
+                                />
+                              )}
+                              <div class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+
+                              {/* Category Badge */}
+                              {post.data.category && (
+                                <div class="absolute top-3 left-3 z-10">
+                                  <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
+                                    {post.data.category}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Updated Badge */}
+                              {isUpdated && (
+                                <div class="absolute top-3 right-3 z-10">
+                                  <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-500/90 text-white backdrop-blur-sm">
+                                    <svg
+                                      class="w-3 h-3"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"
+                                      />
+                                    </svg>
+                                    Updated
+                                  </span>
+                                </div>
+                              )}
                             </a>
+                          )}
 
-                            <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-                              {post.data.description}
-                            </p>
-                          </div>
+                          {/* Content */}
+                          <div class="p-6 space-y-4 flex-1 flex flex-col">
+                            {/* Category when no image */}
+                            {!post.data.heroImageLight && post.data.category && (
+                              <div class="flex items-center gap-2">
+                                <span class="inline-flex self-start items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
+                                  {post.data.category}
+                                </span>
+                                {isUpdated && (
+                                  <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                                    <svg
+                                      class="w-3 h-3"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd"
+                                      />
+                                    </svg>
+                                    Updated
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
-                          {/* Meta Info */}
-                          <div class="pt-4 border-t border-border space-y-3">
-                            <div class="flex items-center justify-between text-xs text-muted-foreground">
-                              <time
-                                datetime={formatDateISO(post.data.pubDate)}
-                                title={`Published on ${formatDateShort(post.data.pubDate)}`}
+                            <div class="space-y-3 flex-1">
+                              <a
+                                href={`/blog/${post.slug}/`}
+                                class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
                               >
-                                {formatDateShort(post.data.pubDate)}
-                              </time>
-                              <span>
-                                {calculateReadingTime(post.body)} min read
-                              </span>
+                                <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                                  {post.data.title}
+                                </h3>
+                              </a>
+
+                              <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                                {post.data.description}
+                              </p>
                             </div>
 
-                            <Button
-                              href={`/blog/${post.slug}/`}
-                              variant="ghost"
-                              size="sm"
-                              class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
-                            >
-                              Read Article
-                              <svg
-                                class="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
+                            {/* Meta Info */}
+                            <div class="pt-4 border-t border-border space-y-3">
+                              <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <time
+                                  datetime={formatDateISO(post.data.updatedDate || post.data.pubDate)}
+                                  title={post.data.updatedDate ? 
+                                    `Updated on ${formatDateShort(post.data.updatedDate)}` : 
+                                    `Published on ${formatDateShort(post.data.pubDate)}`}
+                                >
+                                  {formatDateShort(post.data.updatedDate || post.data.pubDate)}
+                                </time>
+                                <span>
+                                  {calculateReadingTime(post.body)} min read
+                                </span>
+                              </div>
+
+                              <Button
+                                href={`/blog/${post.slug}/`}
+                                variant="ghost"
+                                size="sm"
+                                class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
                               >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M9 5l7 7-7 7"
-                                />
-                              </svg>
-                            </Button>
+                                Read Article
+                                <svg
+                                  class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -654,57 +753,79 @@ const structuredData = {
                       </h3>
 
                       <div class="space-y-4">
-                        {postsByYear[year].map((post) => (
-                          <Card class="group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border hover:border-primary/30">
-                            <CardContent class="p-6">
-                              <div class="flex flex-col md:flex-row md:items-start gap-4">
-                                <div class="flex-1 min-w-0">
-                                  <div class="flex items-start gap-3 mb-3">
-                                    {post.data.category && (
-                                      <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary shrink-0">
-                                        {post.data.category}
-                                      </span>
-                                    )}
-                                    <time
-                                      class="text-sm text-muted-foreground shrink-0"
-                                      datetime={formatDateISO(post.data.pubDate)}
-                                    >
-                                      {formatDate(post.data.pubDate)}
-                                    </time>
-                                  </div>
-
-                                  <a
-                                    href={`/blog/${post.slug}/`}
-                                    class="block focus:outline-none focus:underline"
-                                  >
-                                    <h4 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                                      {post.data.title}
-                                    </h4>
-                                  </a>
-
-                                  <p class="text-muted-foreground text-sm mb-4 line-clamp-2">
-                                    {post.data.description}
-                                  </p>
-
-                                  <div class="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span class="flex items-center gap-1">
-                                      <svg
-                                        class="w-3.5 h-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        aria-hidden="true"
+                        {postsByYear[year].map((post) => {
+                          const isUpdated = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
+                          const displayDate = post.data.updatedDate || post.data.pubDate;
+                          
+                          return (
+                            <Card class="group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border hover:border-primary/30">
+                              <CardContent class="p-6">
+                                <div class="flex flex-col md:flex-row md:items-start gap-4">
+                                  <div class="flex-1 min-w-0">
+                                    <div class="flex items-start gap-3 mb-3 flex-wrap">
+                                      {post.data.category && (
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary shrink-0">
+                                          {post.data.category}
+                                        </span>
+                                      )}
+                                      <time
+                                        class="text-sm text-muted-foreground shrink-0"
+                                        datetime={formatDateISO(displayDate)}
+                                        title={post.data.updatedDate ? 
+                                          `Updated: ${formatDate(post.data.updatedDate)} (Published: ${formatDate(post.data.pubDate)})` : 
+                                          `Published: ${formatDate(post.data.pubDate)}`}
                                       >
-                                        <path
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                          stroke-width="2"
-                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                      </svg>
-                                      {calculateReadingTime(post.body)} min read
-                                    </span>
-                                    {post.data.tags && post.data.tags.length > 0 && (
+                                        {post.data.updatedDate && (
+                                          <span class="inline-flex items-center gap-1">
+                                            <svg
+                                              class="w-3.5 h-3.5"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                              />
+                                            </svg>
+                                          </span>
+                                        )}
+                                        {formatDate(displayDate)}
+                                      </time>
+                                      {isUpdated && (
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-500/10 text-green-600 dark:text-green-400">
+                                          <svg
+                                            class="w-3 h-3"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fill-rule="evenodd"
+                                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                              clip-rule="evenodd"
+                                            />
+                                          </svg>
+                                          Recently Updated
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <a
+                                      href={`/blog/${post.slug}/`}
+                                      class="block focus:outline-none focus:underline"
+                                    >
+                                      <h4 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                                        {post.data.title}
+                                      </h4>
+                                    </a>
+
+                                    <p class="text-muted-foreground text-sm mb-4 line-clamp-2">
+                                      {post.data.description}
+                                    </p>
+
+                                    <div class="flex items-center gap-4 text-xs text-muted-foreground">
                                       <span class="flex items-center gap-1">
                                         <svg
                                           class="w-3.5 h-3.5"
@@ -717,44 +838,63 @@ const structuredData = {
                                             stroke-linecap="round"
                                             stroke-linejoin="round"
                                             stroke-width="2"
-                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                           />
                                         </svg>
-                                        {post.data.tags.length}{" "}
-                                        {post.data.tags.length === 1
-                                          ? "tag"
-                                          : "tags"}
+                                        {calculateReadingTime(post.body)} min read
                                       </span>
-                                    )}
+                                      {post.data.tags && post.data.tags.length > 0 && (
+                                        <span class="flex items-center gap-1">
+                                          <svg
+                                            class="w-3.5 h-3.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                            aria-hidden="true"
+                                          >
+                                            <path
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                            />
+                                          </svg>
+                                          {post.data.tags.length}{" "}
+                                          {post.data.tags.length === 1
+                                            ? "tag"
+                                            : "tags"}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
 
-                                <Button
-                                  href={`/blog/${post.slug}/`}
-                                  variant="ghost"
-                                  size="sm"
-                                  class="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
-                                >
-                                  Read
-                                  <svg
-                                    class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
+                                  <Button
+                                    href={`/blog/${post.slug}/`}
+                                    variant="ghost"
+                                    size="sm"
+                                    class="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
                                   >
-                                    <path
-                                      stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2"
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </svg>
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                                    Read
+                                    <svg
+                                      class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      aria-hidden="true"
+                                    >
+                                      <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 5l7 7-7 7"
+                                      />
+                                    </svg>
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
