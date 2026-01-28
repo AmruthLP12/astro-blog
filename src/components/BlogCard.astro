@@ -26,8 +26,9 @@ const {
   priority = false,
 } = Astro.props;
 
-// Calculate reading time with more accurate estimation
-const calculateReadingTime = (body: string) => {
+// Calculate reading time with more accurate estimation and safety check
+const calculateReadingTime = (body: string | undefined) => {
+  if (!body) return 0;
   const wordsPerMinute = 200;
   const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
@@ -270,31 +271,34 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
               }
             </time>
 
-            <span
-              class="flex items-center gap-1"
-              title={`${readingTime} minute read`}
-              aria-label={`${readingTime} minute read`}
-            >
-              <svg
-                class="w-3.5 h-3.5 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+            {readingTime > 0 && (
+              <span
+                class="flex items-center gap-1"
+                title={`${readingTime} minute read`}
+                aria-label={`${readingTime} minute read`}
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              {readingTime} min
-            </span>
+                <svg
+                  class="w-3.5 h-3.5 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                {readingTime} min
+              </span>
+            )}
 
             {
               post.resolvedAuthor && (
                 <a
-                  href={`/author/${post.resolvedAuthor.slug}`}
+                  href={`/authors/${post.resolvedAuthor.slug}`}
                   class="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1 -mx-1"
                   aria-label={`View posts by ${post.resolvedAuthor.data.name}`}
                 >
@@ -382,17 +386,14 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
   </CardContent>
 </Card>
 
-
-<script type="application/ld+json">
-{
+<script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "{post.data.title}",
+  "headline": post.data.title,
   "author": {
     "@type": "Person",
-    "name": "{post.resolvedAuthor?.data.name}"
+    "name": post.resolvedAuthor?.data.name
   },
-  "datePublished": "{formatDateISO(post.data.pubDate)}",
-  "dateModified": "{formatDateISO(post.data.updatedDate || post.data.pubDate)}"
-}
-</script>
+  "datePublished": formatDateISO(post.data.pubDate),
+  "dateModified": formatDateISO(post.data.updatedDate || post.data.pubDate)
+})} />
