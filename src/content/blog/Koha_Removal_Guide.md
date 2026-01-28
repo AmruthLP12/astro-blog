@@ -2,8 +2,8 @@
 title: "Complete Koha Removal Guide: Clean Uninstall from Debian & Ubuntu Servers"
 description: "A production-focused, step-by-step guide to completely removing Koha LMS from Debian and Ubuntu systems. Covers stopping services, purging packages, cleaning databases, removing Apache/Nginx configs, and wiping residual files for a truly clean system reset."
 pubDate: 2026-01-18 12:27
-updatedDate: 2026-01-18 17:29
-author: "Amruth L P"
+updatedDate: 2026-01-18 12:27
+author: amruth-l-p
 purpose: "This guide provides a safe, production-ready process for fully uninstalling Koha LMS from Linux servers. It ensures all services, packages, databases, cron jobs, and configuration files are removed to prevent conflicts during reinstallation or system repurposing."
 category: lms
 tags:

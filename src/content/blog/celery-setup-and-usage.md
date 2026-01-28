@@ -3,7 +3,7 @@ title: "Celery Setup and Usage Guide for Django: Redis, Tasks, Retries & Monitor
 
 description: "A complete, production-ready guide to installing and configuring Celery with Django using Redis as a broker. Covers task creation, retries, scheduling, monitoring with Flower, and best practices for running Celery in real-world deployments."
 
-author: "Amruth L P"
+author: amruth-l-p
 
 Purpose: "This guide provides a step-by-step, production-focused walkthrough for integrating Celery into a Django application. It explains how to offload long-running and background tasks using Redis, implement retries and scheduling, monitor task health, and avoid common pitfalls when deploying Celery in live environments."
 

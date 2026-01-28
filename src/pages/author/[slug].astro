@@ -1,0 +1,845 @@
+---
+
+
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import Card from "@/components/starwind/card/Card.astro";
+import CardContent from "@/components/starwind/card/CardContent.astro";
+import Button from "@/components/starwind/button/Button.astro";
+import XIcon from "@/components/icons/XIcon.astro";
+import { Image } from "astro:assets";
+
+const { author, posts } = Astro.props as {
+  author: CollectionEntry<"authors">;
+  posts: CollectionEntry<"blog">[];
+};
+
+console.log("Author:", author);
+// console.log("Posts for this author:", allPosts.filter(p => p.data.author === author.slug));
+
+
+
+
+export async function getStaticPaths() {
+  const allAuthors = await getCollection("authors");
+  const allPosts = await getCollection("blog");
+
+  
+
+  return allAuthors.map((author) => {
+    // Filter posts whose author matches this author
+    const authorPosts = allPosts.filter(
+  (post) => post.data.author.id === author.id
+);
+
+    return {
+      params: { slug: author.slug },
+      props: { author, posts: authorPosts },
+    };
+  });
+}
+
+
+
+
+
+
+
+// Sort posts by date (newest first)
+const sortedPosts = posts.sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+
+// Calculate author statistics
+const totalPosts = posts.length;
+const totalWords = posts.reduce((sum, post) => {
+  const wordCount = post.body.trim().split(/\s+/).filter(Boolean).length;
+  return sum + wordCount;
+}, 0);
+const averageReadingTime = Math.ceil(totalWords / (200 * totalPosts || 1));
+
+// Get unique categories and tags
+const categories = [
+  ...new Set(posts.map((p) => p.data.category).filter(Boolean)),
+];
+const allTags = posts.flatMap((p) => p.data.tags || []);
+const tagCounts = allTags.reduce(
+  (acc, tag) => {
+    acc[tag] = (acc[tag] || 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>
+);
+const topTags = Object.entries(tagCounts)
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 10);
+
+// Get date range
+const firstPost = posts.length
+  ? new Date(
+      Math.min(...posts.map((p) => p.data.pubDate.getTime()))
+    )
+  : null;
+const latestPost = posts.length
+  ? new Date(
+      Math.max(...posts.map((p) => p.data.pubDate.getTime()))
+    )
+  : null;
+
+// Helper functions
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const formatDateShort = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const formatDateISO = (date: Date) => {
+  return date.toISOString();
+};
+
+const calculateReadingTime = (body: string) => {
+  const wordsPerMinute = 200;
+  const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
+  return Math.ceil(wordCount / wordsPerMinute);
+};
+
+// Group posts by year for archive
+const postsByYear = sortedPosts.reduce(
+  (acc, post) => {
+    const year = post.data.pubDate.getFullYear();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(post);
+    return acc;
+  },
+  {} as Record<number, typeof sortedPosts>
+);
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+
+// Featured posts (most recent 3)
+const featuredPosts = sortedPosts.slice(0, 3);
+
+// Generate structured data for SEO
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  mainEntity: {
+    "@type": "Person",
+    name: author.data.name,
+    jobTitle: author.data.title,
+    description: author.data.bio,
+    image: author.data.avatar?.src,
+    url: author.data.website || `${Astro.site}author/${author.slug}`,
+    sameAs: [
+      author.data.website,
+      author.data.github,
+      author.data.twitter,
+      author.data.portfolio,
+    ].filter(Boolean),
+  },
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: Astro.site,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Authors",
+        item: `${Astro.site}authors/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: author.data.name,
+        item: Astro.url.href,
+      },
+    ],
+  },
+};
+---
+
+<BaseLayout
+  title={`${author.data.name}${author.data.title ? ` - ${author.data.title}` : ""}`}
+  description={author.data.bio}
+>
+  <!-- Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+  
+
+  <main class="min-h-screen">
+    <!-- Hero Section -->
+    <div
+      class="relative bg-linear-to-br from-background via-background to-muted/20 overflow-hidden"
+    >
+      <!-- Decorative Background Elements -->
+      <div
+        class="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
+      >
+      
+      </div>
+      <div
+        class="absolute top-20 right-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none"
+      >
+      </div>
+      <div
+        class="absolute bottom-20 left-20 w-96 h-96 bg-primary/3 rounded-full blur-3xl pointer-events-none"
+      >
+      </div>
+
+      <div class="max-w-6xl mx-auto px-6 py-16 md:py-24 relative">
+        <!-- Breadcrumb Navigation -->
+        <nav
+          class="mb-8 flex items-center gap-2 text-sm text-muted-foreground"
+          aria-label="Breadcrumb"
+        >
+          <a
+            href="/"
+            class="hover:text-foreground transition-colors focus:outline-none focus:underline"
+            >Home</a
+          >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"></path>
+          </svg>
+          <a
+            href="/authors"
+            class="hover:text-foreground transition-colors focus:outline-none focus:underline"
+            >Authors</a
+          >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"></path>
+          </svg>
+          <span class="text-foreground font-medium">{author.data.name}</span>
+        </nav>
+
+        <!-- Author Header -->
+        <div class="flex flex-col md:flex-row gap-8 items-start md:items-center">
+          <!-- Avatar -->
+          <div class="shrink-0">
+            {
+              author.data.avatar ? (
+                <Image
+                  src={author.data.avatar}
+                  alt={author.data.name}
+                  width={160}
+                  height={160}
+                  class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-border shadow-2xl"
+                />
+              ) : (
+                <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary/10 flex items-center justify-center border-4 border-border shadow-2xl">
+                  <svg
+                    class="w-16 h-16 md:w-20 md:h-20 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+              )
+            }
+          </div>
+
+          <!-- Author Info -->
+          <div class="flex-1 space-y-4">
+            <div>
+              <h1
+                class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight bg-linear-to-br from-foreground to-foreground/70 bg-clip-text text-transparent"
+              >
+                {author.data.name}
+              </h1>
+              {
+                author.data.title && (
+                  <p class="text-xl md:text-2xl text-muted-foreground mt-2">
+                    {author.data.title}
+                  </p>
+                )
+              }
+            </div>
+
+            <p class="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+              {author.data.bio}
+            </p>
+
+            <!-- Social Links -->
+            {
+              (author.data.website ||
+                author.data.twitter ||
+                author.data.github ||
+                author.data.portfolio) && (
+                <div class="flex flex-wrap items-center gap-3 pt-2">
+                  {author.data.website && (
+                    <Button
+                      href={author.data.website}
+                      variant="outline"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="gap-2"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                        />
+                      </svg>
+                      Website
+                    </Button>
+                  )}
+                  {author.data.twitter && (
+                    <Button
+                      href={author.data.twitter}
+                      variant="outline"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="gap-2"
+                    >
+                      <XIcon class="w-4 h-4" />
+                      Twitter
+                    </Button>
+                  )}
+                  {author.data.github && (
+                    <Button
+                      href={author.data.github}
+                      variant="outline"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="gap-2"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                      </svg>
+                      GitHub
+                    </Button>
+                  )}
+                  {author.data.portfolio && (
+                    <Button
+                      href={author.data.portfolio}
+                      variant="outline"
+                      size="sm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="gap-2"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Portfolio
+                    </Button>
+                  )}
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    {
+      totalPosts > 0 && (
+        <section class="bg-muted/30 border-y border-border">
+          <div class="max-w-6xl mx-auto px-6 py-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <!-- Total Posts -->
+              <div class="text-center">
+                <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
+                  {totalPosts}
+                </div>
+                <div class="text-sm text-muted-foreground">
+                  {totalPosts === 1 ? "Article" : "Articles"}
+                </div>
+              </div>
+
+              <!-- Total Words -->
+              <div class="text-center">
+                <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
+                  {Math.round(totalWords / 1000)}k
+                </div>
+                <div class="text-sm text-muted-foreground">Words Written</div>
+              </div>
+
+              <!-- Categories -->
+              <div class="text-center">
+                <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
+                  {categories.length}
+                </div>
+                <div class="text-sm text-muted-foreground">
+                  {categories.length === 1 ? "Category" : "Categories"}
+                </div>
+              </div>
+
+              <!-- Active Since -->
+              <div class="text-center">
+                <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
+                  {firstPost && firstPost.getFullYear()}
+                </div>
+                <div class="text-sm text-muted-foreground">Member Since</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Main Content Area -->
+    <div class="max-w-6xl mx-auto px-6 py-16">
+      {
+        totalPosts === 0 ? (
+          /* No Posts State */
+          <div class="text-center py-20">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+              <svg
+                class="w-10 h-10 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">No Articles Yet</h2>
+            <p class="text-muted-foreground mb-6">
+              {author.data.name} hasn't published any articles yet.
+            </p>
+            <Button href="/blog" variant="outline">
+              Browse All Articles
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Featured Posts */}
+            {featuredPosts.length > 0 && (
+              <section class="mb-20">
+                <div class="flex items-center justify-between mb-8">
+                  <div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-2">
+                      Latest Articles
+                    </h2>
+                    <p class="text-muted-foreground">
+                      Most recent posts from {author.data.name}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                  {featuredPosts.map((post) => (
+                    <Card class="group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 overflow-hidden h-full">
+                      <CardContent class="p-0 h-full flex flex-col">
+                        {/* Hero Image */}
+                        {post.data.heroImageLight && (
+                          <a
+                            href={`/blog/${post.slug}/`}
+                            class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
+                            aria-label={`View article: ${post.data.title}`}
+                          >
+                            <Image
+                              src={post.data.heroImageLight}
+                              alt={ post.data.title}
+                              width={400}
+                              height={250}
+                              class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 block dark:hidden"
+                            />
+                            {post.data.heroImageDark && (
+                              <Image
+                                src={post.data.heroImageDark}
+                                alt={ post.data.title}
+                                width={400}
+                                height={250}
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 hidden dark:block"
+                              />
+                            )}
+                            <div class="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
+
+                            {/* Category Badge */}
+                            {post.data.category && (
+                              <div class="absolute top-3 left-3 z-10">
+                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-background/90 backdrop-blur-sm text-foreground border border-border/50">
+                                  {post.data.category}
+                                </span>
+                              </div>
+                            )}
+                          </a>
+                        )}
+
+                        {/* Content */}
+                        <div class="p-6 space-y-4 flex-1 flex flex-col">
+                          {/* Category when no image */}
+                          {!post.data.heroImageLight && post.data.category && (
+                            <span class="inline-flex self-start items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
+                              {post.data.category}
+                            </span>
+                          )}
+
+                          <div class="space-y-3 flex-1">
+                            <a
+                              href={`/blog/${post.slug}/`}
+                              class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                            >
+                              <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                                {post.data.title}
+                              </h3>
+                            </a>
+
+                            <p class="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                              {post.data.description}
+                            </p>
+                          </div>
+
+                          {/* Meta Info */}
+                          <div class="pt-4 border-t border-border space-y-3">
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                              <time
+                                datetime={formatDateISO(post.data.pubDate)}
+                                title={`Published on ${formatDateShort(post.data.pubDate)}`}
+                              >
+                                {formatDateShort(post.data.pubDate)}
+                              </time>
+                              <span>
+                                {calculateReadingTime(post.body)} min read
+                              </span>
+                            </div>
+
+                            <Button
+                              href={`/blog/${post.slug}/`}
+                              variant="ghost"
+                              size="sm"
+                              class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
+                            >
+                              Read Article
+                              <svg
+                                class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Topics & Tags */}
+            {topTags.length > 0 && (
+              <section class="mb-20">
+                <div class="mb-8">
+                  <h2 class="text-2xl md:text-3xl font-bold mb-2">
+                    Topics Covered
+                  </h2>
+                  <p class="text-muted-foreground">
+                    Explore articles by topic
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                  {topTags.map(([tag, count]) => (
+                    <a
+                      href={`/blog/tag/${tag.toLowerCase()}/`}
+                      class="group inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted border border-border/50 hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <span class="text-primary font-medium">#</span>
+                      <span class="font-medium">{tag}</span>
+                      <span class="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full">
+                        {count}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Article Archive by Year */}
+            {years.length > 0 && (
+              <section class="mb-20">
+                <div class="mb-8">
+                  <h2 class="text-2xl md:text-3xl font-bold mb-2">
+                    Article Archive
+                  </h2>
+                  <p class="text-muted-foreground">
+                    Browse all articles chronologically
+                  </p>
+                </div>
+
+                <div class="space-y-12">
+                  {years.map((year) => (
+                    <div>
+                      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                        <span>{year}</span>
+                        <span class="text-sm font-normal text-muted-foreground">
+                          ({postsByYear[year].length}{" "}
+                          {postsByYear[year].length === 1
+                            ? "article"
+                            : "articles"}
+                          )
+                        </span>
+                      </h3>
+
+                      <div class="space-y-4">
+                        {postsByYear[year].map((post) => (
+                          <Card class="group hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border hover:border-primary/30">
+                            <CardContent class="p-6">
+                              <div class="flex flex-col md:flex-row md:items-start gap-4">
+                                <div class="flex-1 min-w-0">
+                                  <div class="flex items-start gap-3 mb-3">
+                                    {post.data.category && (
+                                      <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary shrink-0">
+                                        {post.data.category}
+                                      </span>
+                                    )}
+                                    <time
+                                      class="text-sm text-muted-foreground shrink-0"
+                                      datetime={formatDateISO(post.data.pubDate)}
+                                    >
+                                      {formatDate(post.data.pubDate)}
+                                    </time>
+                                  </div>
+
+                                  <a
+                                    href={`/blog/${post.slug}/`}
+                                    class="block focus:outline-none focus:underline"
+                                  >
+                                    <h4 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                                      {post.data.title}
+                                    </h4>
+                                  </a>
+
+                                  <p class="text-muted-foreground text-sm mb-4 line-clamp-2">
+                                    {post.data.description}
+                                  </p>
+
+                                  <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <span class="flex items-center gap-1">
+                                      <svg
+                                        class="w-3.5 h-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-hidden="true"
+                                      >
+                                        <path
+                                          stroke-linecap="round"
+                                          stroke-linejoin="round"
+                                          stroke-width="2"
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                      {calculateReadingTime(post.body)} min read
+                                    </span>
+                                    {post.data.tags && post.data.tags.length > 0 && (
+                                      <span class="flex items-center gap-1">
+                                        <svg
+                                          class="w-3.5 h-3.5"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          aria-hidden="true"
+                                        >
+                                          <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                          />
+                                        </svg>
+                                        {post.data.tags.length}{" "}
+                                        {post.data.tags.length === 1
+                                          ? "tag"
+                                          : "tags"}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <Button
+                                  href={`/blog/${post.slug}/`}
+                                  variant="ghost"
+                                  size="sm"
+                                  class="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                                >
+                                  Read
+                                  <svg
+                                    class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )
+      }
+
+      <!-- Back to All Authors -->
+      <div class="text-center pt-12">
+        <Button href="/authors" variant="outline" size="lg">
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"></path>
+          </svg>
+          View All Authors
+        </Button>
+      </div>
+    </div>
+
+    <!-- Newsletter CTA -->
+    {
+      totalPosts > 0 && (
+        <section class="bg-muted/20 py-24">
+          <div class="max-w-3xl mx-auto px-6">
+            <Card class="bg-linear-to-br from-primary/5 via-primary/10 to-background border-2 border-primary/20">
+              <CardContent class="text-center p-12 space-y-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                  <svg
+                    class="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <h3 class="text-2xl font-bold">
+                  Stay Updated with {author.data.name}
+                </h3>
+                <p class="text-muted-foreground max-w-md mx-auto">
+                  Get notified when {author.data.name.split(" ")[0]} publishes
+                  new content. No spam, just quality articles.
+                </p>
+                <Button variant="primary" size="lg">
+                  Subscribe to Newsletter
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )
+    }
+  </main>
+</BaseLayout>
+
+<style>
+  .bg-grid-pattern {
+    background-image: linear-gradient(
+        to right,
+        hsl(var(--border) / 0.3) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        hsl(var(--border) / 0.3) 1px,
+        transparent 1px
+      );
+    background-size: 40px 40px;
+  }
+</style>
