@@ -1,6 +1,6 @@
 # Astro Blog Project
 
-This repository contains a modern, fast, and fully content-driven blog built with **Astro 5**, **MD/MDX content collections**, and **Tailwind CSS**. It supports authors, tags, categories, RSS feeds, SEO, and a reusable component system (Starwind).
+This repository contains a modern, fast, and fully content-driven blog built with **Astro 5**, **MD content collections**, and **Tailwind CSS**. It supports authors, tags, categories, RSS feeds, SEO, and a reusable component system (Starwind).
 
 ---
 
@@ -35,7 +35,6 @@ src/
 ├─ assets/           # Static assets (SVGs, backgrounds)
 ├─ components/      # UI and layout components
 │  ├─ icons/        # SVG-based icon components
-│  ├─ mdx/          # MDX components (CodeBlock, BlogImage)
 │  ├─ starwind/    # Reusable UI system (Button, Card, etc.)
 │  └─ BlogCard.astro
 ├─ config/          # Site configuration (social links)
