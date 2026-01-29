@@ -7,7 +7,7 @@ updatedDate: 2026-01-02 17:00
 heroImageDark: ./images/mariadb.jpg
 heroImageLight: ./images/mariadb.jpg
 tags: ["mariadb", "linux", "database"]
-author: amruth-l-p
+author: techno-drishti
 ---
 
 # MariaDB Installation and Usage on Linux (Debian/Ubuntu)
