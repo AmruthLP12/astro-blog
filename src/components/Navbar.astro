@@ -8,9 +8,8 @@ const navItems = [
   { href: "/blog", label: "Blog" },
   { href: "/authors", label: "Authors" },
   {
-    href: "https://amruthlp.vercel.app",
-    label: "About",
-    external: true,
+    href: "/about",
+    label: "About"
   },
 ];
 
@@ -44,8 +43,6 @@ const isActive = (href:any) =>
           navItems.map((item) => (
             <a
               href={item.href}
-              target={item.external ? "_blank" : ""}
-              rel={item.external ? "noopener noreferrer" : ""}
               class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 isActive(item.href)
                   ? "text-primary bg-primary/10"
@@ -88,8 +85,6 @@ const isActive = (href:any) =>
           navItems.map((item) => (
             <a
               href={item.href}
-              target={item.external ? "_blank" : ""}
-              rel={item.external ? "noopener noreferrer" : ""}
               class={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 isActive(item.href)
                   ? "text-primary bg-primary/10"
