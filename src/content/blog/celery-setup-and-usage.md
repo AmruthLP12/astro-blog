@@ -9,8 +9,10 @@ Purpose: "This guide provides a step-by-step, production-focused walkthrough for
 
 pubDate: 2026-01-21 11:51
 
-updatedDate: 2026-01-21 11:51
+updatedDate: 2026-01-29 11:20
 
+heroImageDark: ./images/celery_setup/dark.jpg
+heroImageLight: ./images/celery_setup/light.jpg
 
 
 category: "backend"
