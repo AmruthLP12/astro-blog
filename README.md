@@ -5,7 +5,9 @@
 [![Sitemap](https://img.shields.io/badge/Sitemap-Visit-blue)](https://technodrishti.vercel.app/sitemap-index.xml)
 
 🌐 **Live Site:** [https://technodrishti.vercel.app](https://technodrishti.vercel.app)
+
 📡 **RSS Feed:** [https://technodrishti.vercel.app/rss.xml](https://technodrishti.vercel.app/rss.xml)
+
 🗺️ **Sitemap:** [https://technodrishti.vercel.app/sitemap-index.xml](https://technodrishti.vercel.app/sitemap-index.xml)
 
 This repository contains a modern, fast, and fully content-driven blog built with **Astro 5**, **MD content collections**, and **Tailwind CSS**. It supports authors, tags, categories, RSS feeds, SEO, and a reusable component system (Starwind).
