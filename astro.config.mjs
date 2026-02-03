@@ -31,6 +31,6 @@ export default defineConfig({
     },
   },
 
-  site: "https://tecnodrishti.vercel.app",
+  site: "https://technodrishti.vercel.app",
   integrations: [sitemap()],
 });

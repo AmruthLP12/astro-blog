@@ -10,6 +10,7 @@ import Prose from "@/components/Prose.astro";
 import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
 import { Image } from "astro:assets";
+import TableOfContents from "@/components/blog/TableOfContents.astro";
 
 // Get all posts and authors
 const allPosts = await getCollection("blog");
@@ -550,29 +551,7 @@ const structuredData = {
     <!-- Article Content -->
     <article class="max-w-6xl mx-auto px-6 pb-24">
       <!-- Table of Contents Placeholder -->
-      <aside class="mb-12 p-6 rounded-xl bg-muted/30 border border-border/50">
-        <h2
-          class="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-          In This Article
-        </h2>
-        <p class="text-sm text-muted-foreground">
-          Scroll down to explore the full content of this post.
-        </p>
-      </aside>
+      <TableOfContents selector="article" />
 
       <!-- Main Content with Enhanced Typography -->
       <div class="prose-wrapper">

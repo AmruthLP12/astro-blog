@@ -1,10 +1,35 @@
 # Astro Blog Project
 
+[![Live Site](https://img.shields.io/badge/Live%20Site-Visit-brightgreen)](https://technodrishti.vercel.app)
+[![RSS Feed](https://img.shields.io/badge/RSS%20Feed-Subscribe-blue)](https://technodrishti.vercel.app/rss.xml)
+[![Sitemap](https://img.shields.io/badge/Sitemap-Visit-blue)](https://technodrishti.vercel.app/sitemap-index.xml)
+
+🌐 **Live Site:** [https://technodrishti.vercel.app](https://technodrishti.vercel.app)
+📡 **RSS Feed:** [https://technodrishti.vercel.app/rss.xml](https://technodrishti.vercel.app/rss.xml)
+🗺️ **Sitemap:** [https://technodrishti.vercel.app/sitemap-index.xml](https://technodrishti.vercel.app/sitemap-index.xml)
+
 This repository contains a modern, fast, and fully content-driven blog built with **Astro 5**, **MD content collections**, and **Tailwind CSS**. It supports authors, tags, categories, RSS feeds, SEO, and a reusable component system (Starwind).
+
+This project powers the public blog available at  
+👉 **https://technodrishti.vercel.app**,  
+a fast, SEO-optimized Astro 5 blog with RSS feeds, sitemap indexing, and content collections.
+
 
 ---
 
-# Astro Blog
+## 🔗 Live Demo
+
+You can view the live production site here:
+
+👉 **https://technodrishti.vercel.app**
+
+The blog is fully statically generated using Astro 5 and optimized for:
+
+- Fast load times
+- SEO
+- RSS-based content discovery
+
+## Astro Blog
 
 A modern, fast, and SEO-friendly blog built with **Astro 5**, **STARWIND UI components**, **MD**, and **Tailwind CSS**.
 
@@ -20,10 +45,10 @@ A modern, fast, and SEO-friendly blog built with **Astro 5**, **STARWIND UI comp
 
 ## 🚀 Tech Stack
 
-- **Framework:** Astro 5
+- **Framework:** Astro 5 (https://technodrishti.vercel.app)
 - **Styling:** Tailwind CSS
 - **Content:** Astro Content Collections (Markdown)
-- **RSS:** @astrojs/rss
+- **RSS:** @astrojs/rss → https://technodrishti.vercel.app/rss.xml
 - **Image Optimization:** Sharp
 
 ---
@@ -147,8 +172,8 @@ Powered by `@astrojs/rss`.
 
 ## 🌐 SEO & Sitemap
 
-* Sitemap: `/sitemap-index.xml`
-* Robots file: `/robots.txt`
+- Sitemap: `/sitemap-index.xml`
+- Robots file: `/robots.txt`
 
 ---
 
@@ -160,11 +185,7 @@ Powered by `@astrojs/rss`.
 | `pnpm build`   | Build for production |
 | `pnpm preview` | Preview production   |
 
-
-
-
 ---
-
 
 ## 🧱 Architecture Overview
 
@@ -191,30 +212,30 @@ UI Components
 Defined in:
 
 ```ts
-src/content/config.ts
+src / content / config.ts;
 ```
 
 ### Blog Collection
 
 Each blog post supports:
 
-* `title`
-* `description`
-* `publishedAt`
-* `author` (reference to authors collection)
-* `tags`
-* `category`
-* `heroImage`
+- `title`
+- `description`
+- `publishedAt`
+- `author` (reference to authors collection)
+- `tags`
+- `category`
+- `heroImage`
 
 ### Authors Collection
 
 Each author supports:
 
-* `name`
-* `title`
-* `bio`
-* `avatar`
-* `socials`
+- `name`
+- `title`
+- `bio`
+- `avatar`
+- `socials`
 
 ---
 
@@ -228,13 +249,13 @@ src/components/starwind/
 
 ### Available Components
 
-* `Button`
-* `Card`
-* `CardHeader`
-* `CardContent`
-* `CardFooter`
-* `CardTitle`
-* `CardDescription`
+- `Button`
+- `Card`
+- `CardHeader`
+- `CardContent`
+- `CardFooter`
+- `CardTitle`
+- `CardDescription`
 
 These components use **Tailwind Variants** for styling consistency.
 
@@ -265,9 +286,9 @@ import { Image } from "astro:assets";
 
 This provides:
 
-* Automatic resizing
-* Format optimization
-* Lazy loading
+- Automatic resizing
+- Format optimization
+- Lazy loading
 
 ---
 
@@ -282,9 +303,9 @@ src/components/theme-toggle.astro
 
 Supports:
 
-* Light mode
-* Dark mode
-* System preference
+- Light mode
+- Dark mode
+- System preference
 
 ---
 
@@ -310,18 +331,18 @@ src/layouts/BaseLayout.astro
 
 Includes:
 
-* Meta tags
-* OpenGraph
-* Twitter cards
-* Canonical URLs
+- Meta tags
+- OpenGraph
+- Twitter cards
+- Canonical URLs
 
 ---
 
 ## 🧪 Development Tips
 
-* Use `pnpm dev` for hot reload
-* Validate frontmatter fields carefully
-* Always optimize images in `/content/blog/images`
+- Use `pnpm dev` for hot reload
+- Validate frontmatter fields carefully
+- Always optimize images in `/content/blog/images`
 
 ---
 
@@ -329,9 +350,9 @@ Includes:
 
 This project can be deployed on:
 
-* Vercel
-* Netlify
-* Cloudflare Pages
+- Vercel
+- Netlify
+- Cloudflare Pages
 
 Recommended build command:
 
@@ -356,8 +377,11 @@ dist/
 
 ---
 
+## 📜 Credits
+
+🔗 **Project Website:** https://technodrishti.vercel.app  
+Built and maintained by **Amruth L P**
+
 ## 📜 License
 
 MIT License
-
-
