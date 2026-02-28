@@ -6,8 +6,8 @@ updatedDate: 2026-02-26 10:00
 category: devops
 author: nakshara
 purpose: "This guide provides a step-by-step process for setting up Gitea on Debian/Ubuntu systems with LAN access, PostgreSQL, and Apache. It covers the installation of Gitea, the creation of a PostgreSQL database, and the configuration of Apache to serve Gitea over the network. WIthout Docker, this guide is a great starting point for developers who want to deploy Gitea on their own servers."
-heroImageLight: ./images/gitea-setup-on-debian-ubuntu-light.jpeg
-heroImageDark: ./images/gitea-setup-on-debian-ubuntu-dark.jpeg
+heroImageLight: ./images/gitea-setup-guide/gitea-setup-on-debian-ubuntu-light.jpeg
+heroImageDark: ./images/gitea-setup-guide/gitea-setup-on-debian-ubuntu-dark.jpeg
 tags:
   - git
   - gitea
@@ -328,10 +328,9 @@ sudo systemctl reload apache2
 
 1. You Open:
 
-
-    ```code
-    http://123.45.67.89:8080
-    ```
+   ```code
+   http://123.45.67.89:8080
+   ```
 
 2. Apache receives request:
 
