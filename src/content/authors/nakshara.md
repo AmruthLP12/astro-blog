@@ -1,5 +1,5 @@
 ---
-name: "Naksharan"
+name: "Nakshara"
 title: "Smart Systems.Stellar Results."
 bio: "A collective of developers, designers, and engineers building scalable digital solutions and sharing practical insights from the field."
 website: "https://nakshara.vercel.app/"
@@ -10,7 +10,6 @@ portfolio: "https://nakshara.vercel.app/"
 ---
 
 Nakshara builds intelligent, scalable AI and SaaS systems that empower businesses to innovate, automate, and grow with confidence.
-
 
 We write about:
 
