@@ -1,4 +1,5 @@
 import { defineCollection, z, reference } from "astro:content";
+import { glob } from "astro/loaders";
 
 const parseDate = z.union([z.string(), z.date()]).transform((value) => {
   if (value instanceof Date) return value;
@@ -6,7 +7,7 @@ const parseDate = z.union([z.string(), z.date()]).transform((value) => {
 });
 
 const authors = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/authors" }),
   schema: ({ image }) =>
     z.object({
       name: z.string(),
@@ -22,7 +23,7 @@ const authors = defineCollection({
 });
 
 const blog = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
@@ -32,14 +33,11 @@ const blog = defineCollection({
       pubDate: parseDate,
       updatedDate: parseDate.optional(),
 
-      // ✅ OPTIONAL hero image
       heroImageDark: image().optional(),
       heroImageLight: image().optional(),
 
-      // Category (single)
       category: z
         .enum([
-          // Core development
           "web",
           "backend",
           "ui",
@@ -47,30 +45,21 @@ const blog = defineCollection({
           "devops",
           "deploy",
           "testing",
-
-          // Platforms / Systems
           "lms",
           "cms",
           "erp",
           "platform",
-
-          // Tools & frameworks
           "astro",
           "tools",
           "dev",
-
-          // Learning & productivity
           "learning",
           "productivity",
-
-          // Personal / misc
           "personal",
           "misc",
           "other",
         ])
         .optional(),
 
-      // Tags (multiple)
       tags: z.array(z.string()).optional(),
     }),
 });
