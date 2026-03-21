@@ -27,7 +27,7 @@ export async function getStaticPaths() {
       }
 
       return {
-        params: { slug: author.slug },
+        params: { slug: author.id },
         props: { author, posts: authorPosts },
       };
     })
@@ -80,7 +80,9 @@ const tagCounts = allTags.reduce(
   },
   {} as Record<string, number>
 );
-const topTags = Object.entries(tagCounts)
+const entries = Object.entries(tagCounts) as [string, number][];
+
+const topTags = entries
   .sort(([, a], [, b]) => b - a)
   .slice(0, 10);
 
@@ -157,7 +159,7 @@ const structuredData = {
     jobTitle: author.data.title,
     description: author.data.bio,
     image: author.data.avatar?.src,
-    url: author.data.website || `${Astro.site}author/${author.slug}`,
+    url: author.data.website || `${Astro.site}author/${author.id}`,
     sameAs: [
       author.data.website,
       author.data.github,
@@ -554,7 +556,7 @@ const structuredData = {
                           {/* Hero Image */}
                           {post.data.heroImageLight && (
                             <a
-                              href={`/blog/${post.slug}/`}
+                              href={`/blog/${post.id}/`}
                               class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
                               aria-label={`View article: ${post.data.title}`}
                             >
@@ -636,7 +638,7 @@ const structuredData = {
 
                             <div class="space-y-3 flex-1">
                               <a
-                                href={`/blog/${post.slug}/`}
+                                href={`/blog/${post.id}/`}
                                 class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
                               >
                                 <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
@@ -661,12 +663,12 @@ const structuredData = {
                                   {formatDateShort(post.data.updatedDate || post.data.pubDate)}
                                 </time>
                                 <span>
-                                  {calculateReadingTime(post.body)} min read
+                                  {calculateReadingTime(post.body ?? "")} min read
                                 </span>
                               </div>
 
                               <Button
-                                href={`/blog/${post.slug}/`}
+                                href={`/blog/${post.id}/`}
                                 variant="ghost"
                                 size="sm"
                                 class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
@@ -813,7 +815,7 @@ const structuredData = {
                                     </div>
 
                                     <a
-                                      href={`/blog/${post.slug}/`}
+                                      href={`/blog/${post.id}/`}
                                       class="block focus:outline-none focus:underline"
                                     >
                                       <h4 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
@@ -841,7 +843,7 @@ const structuredData = {
                                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                           />
                                         </svg>
-                                        {calculateReadingTime(post.body)} min read
+                                        {calculateReadingTime(post.body ?? "")} min read
                                       </span>
                                       {post.data.tags && post.data.tags.length > 0 && (
                                         <span class="flex items-center gap-1">
@@ -869,7 +871,7 @@ const structuredData = {
                                   </div>
 
                                   <Button
-                                    href={`/blog/${post.slug}/`}
+                                    href={`/blog/${post.id}/`}
                                     variant="ghost"
                                     size="sm"
                                     class="shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all"

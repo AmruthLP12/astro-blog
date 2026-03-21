@@ -12,15 +12,14 @@ const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
 
-const postsByYear = posts.reduce(
-  (acc, post) => {
-    const year = post.data.pubDate.getFullYear().toString();
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(post);
-    return acc;
-  },
-  {} as Record<string, typeof posts>
-);
+console.log(posts);
+
+const postsByYear = posts.reduce((acc, post) => {
+  const year = post.data.pubDate.getFullYear().toString();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(post);
+  return acc;
+}, {} as Record<string, typeof posts>);
 
 const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 
@@ -118,7 +117,13 @@ const formatDate = (date: Date) => {
                   {postsByYear[year].map((post) => (
                     <div
                       class="post-card"
-                      data-search-text={`${post.data.title.toLowerCase()} ${post.data.description.toLowerCase()} ${post.data.category?.toLowerCase() || ""} ${post.data.tags?.map((t) => t.toLowerCase()).join(" ") || ""}`}
+                      data-search-text={`${post.data.title.toLowerCase()} ${post.data.description.toLowerCase()} ${
+                        post.data.category?.toLowerCase() || ""
+                      } ${
+                        post.data.tags
+                          ?.map((t: string) => t.toLowerCase())
+                          .join(" ") || ""
+                      }`}
                     >
                       <Card class="hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden border-2 border-transparent hover:border-primary/20 h-full">
                         <CardContent class="p-0 h-full flex flex-col">
@@ -167,14 +172,16 @@ const formatDate = (date: Date) => {
 
                             {post.data.tags && post.data.tags.length > 0 && (
                               <div class="flex flex-wrap gap-1.5">
-                                {post.data.tags.slice(0, 3).map((tag) => (
-                                  <a
-                                    href={`/blog/tag/${tag.toLowerCase()}/`}
-                                    class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50"
-                                  >
-                                    #{tag}
-                                  </a>
-                                ))}
+                                {post.data.tags
+                                  .slice(0, 3)
+                                  .map((tag: string) => (
+                                    <a
+                                      href={`/blog/tag/${tag.toLowerCase()}/`}
+                                      class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50"
+                                    >
+                                      #{tag}
+                                    </a>
+                                  ))}
                                 {post.data.tags.length > 3 && (
                                   <span class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50">
                                     +{post.data.tags.length - 3}
@@ -219,7 +226,7 @@ const formatDate = (date: Date) => {
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                       />
                                     </svg>
-                                    {calculateReadingTime(post.body)} min
+                                    {calculateReadingTime(post.body ?? "")} min
                                   </span>
                                 </div>
 
@@ -251,7 +258,7 @@ const formatDate = (date: Date) => {
                               </div>
 
                               <Button
-                                href={`/blog/${post.slug}/`}
+                                href={`/blog/${post.id}/`}
                                 variant="ghost"
                                 size="sm"
                                 class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"

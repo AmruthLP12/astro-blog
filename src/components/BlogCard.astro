@@ -60,13 +60,13 @@ const formatDateISO = (date: Date) => {
 const isRecentlyUpdated = (updatedDate?: Date, pubDate?: Date) => {
   if (!updatedDate || !pubDate) return false;
   const daysSinceUpdate = Math.floor(
-    (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24),
+    (Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24)
   );
   const isDifferent = updatedDate.getTime() !== pubDate.getTime();
   return isDifferent && daysSinceUpdate <= 7;
 };
 
-const readingTime = calculateReadingTime(post.body);
+const readingTime = calculateReadingTime(post.body ?? "");
 const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
 ---
 
@@ -78,7 +78,7 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
     {
       showImage && post.data.heroImageLight && (
         <a
-          href={`/blog/${post.slug}/`}
+          href={`/blog/${post.id}/`}
           class="relative h-48 overflow-hidden block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
           aria-label={`View article: ${post.data.title}`}
         >
@@ -195,7 +195,7 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
 
       <div class="space-y-3 flex-1">
         <a
-          href={`/blog/${post.slug}/`}
+          href={`/blog/${post.id}/`}
           class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
         >
           <h3
@@ -219,11 +219,10 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
           <div class="flex flex-wrap gap-1.5" role="list" aria-label="Tags">
             {post.data.tags
               .slice(0, variant === "compact" ? 2 : 3)
-              .map((tag) => (
+              .map((tag: string) => (
                 <a
                   href={`/blog/tag/${tag.toLowerCase()}/`}
                   class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted hover:border-border transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  
                 >
                   #{tag}
                 </a>
@@ -231,7 +230,9 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
             {post.data.tags.length > (variant === "compact" ? 2 : 3) && (
               <span
                 class="inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/50 text-muted-foreground border border-border/50"
-                title={`${post.data.tags.length - (variant === "compact" ? 2 : 3)} more tags`}
+                title={`${
+                  post.data.tags.length - (variant === "compact" ? 2 : 3)
+                } more tags`}
               >
                 +{post.data.tags.length - (variant === "compact" ? 2 : 3)}
               </span>
@@ -271,34 +272,36 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
               }
             </time>
 
-            {readingTime > 0 && (
-              <span
-                class="flex items-center gap-1"
-                title={`${readingTime} minute read`}
-                aria-label={`${readingTime} minute read`}
-              >
-                <svg
-                  class="w-3.5 h-3.5 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+            {
+              readingTime > 0 && (
+                <span
+                  class="flex items-center gap-1"
+                  title={`${readingTime} minute read`}
+                  aria-label={`${readingTime} minute read`}
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
-                {readingTime} min
-              </span>
-            )}
+                  <svg
+                    class="w-3.5 h-3.5 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {readingTime} min
+                </span>
+              )
+            }
 
             {
               post.resolvedAuthor && (
                 <a
-                  href={`/authors/${post.resolvedAuthor.slug}`}
+                  href={`/authors/${post.resolvedAuthor.id}`}
                   class="flex items-center gap-1 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1 -mx-1"
                   aria-label={`View posts by ${post.resolvedAuthor.data.name}`}
                 >
@@ -332,7 +335,9 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
                 <time
                   class="flex items-center gap-1 text-primary text-[0.65rem]"
                   datetime={formatDateISO(post.data.updatedDate)}
-                  title={`Last updated on ${formatDateWithYear(post.data.updatedDate)}`}
+                  title={`Last updated on ${formatDateWithYear(
+                    post.data.updatedDate
+                  )}`}
                 >
                   <svg
                     class="w-3.5 h-3.5 shrink-0"
@@ -360,7 +365,7 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
 
         {/* CTA Button */}
         <Button
-          href={`/blog/${post.slug}/`}
+          href={`/blog/${post.id}/`}
           variant="ghost"
           size="sm"
           class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between focus:ring-2 focus:ring-primary"
@@ -386,14 +391,17 @@ const isNew = isRecentlyUpdated(post.data.updatedDate, post.data.pubDate);
   </CardContent>
 </Card>
 
-<script type="application/ld+json" set:html={JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  "headline": post.data.title,
-  "author": {
-    "@type": "Person",
-    "name": post.resolvedAuthor?.data.name
-  },
-  "datePublished": formatDateISO(post.data.pubDate),
-  "dateModified": formatDateISO(post.data.updatedDate || post.data.pubDate)
-})} />
+<script
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.data.title,
+    author: {
+      "@type": "Person",
+      name: post.resolvedAuthor?.data.name,
+    },
+    datePublished: formatDateISO(post.data.pubDate),
+    dateModified: formatDateISO(post.data.updatedDate || post.data.pubDate),
+  })}
+></script>

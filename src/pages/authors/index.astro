@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { getCollection,getEntry } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import Card from "@/components/starwind/card/Card.astro";
 import CardContent from "@/components/starwind/card/CardContent.astro";
@@ -99,13 +99,16 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
       <!-- Decorative Background Elements -->
       <div
         class="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
-      ></div>
+      >
+      </div>
       <div
         class="absolute top-20 right-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none"
-      ></div>
+      >
+      </div>
       <div
         class="absolute bottom-20 left-20 w-96 h-96 bg-primary/3 rounded-full blur-3xl pointer-events-none"
-      ></div>
+      >
+      </div>
 
       <div class="max-w-6xl mx-auto px-6 py-16 md:py-24 relative">
         <!-- Breadcrumb Navigation -->
@@ -136,7 +139,9 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
 
         <!-- Page Header -->
         <div class="text-center max-w-3xl mx-auto space-y-6">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4">
+          <div
+            class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-4"
+          >
             <svg
               class="w-10 h-10"
               fill="none"
@@ -196,11 +201,13 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
 
           <div class="text-center">
             <div class="text-3xl md:text-4xl font-bold text-primary mb-2">
-              {[
-                ...new Set(
-                  allPosts.map((p) => p.data.category).filter(Boolean)
-                ),
-              ].length}
+              {
+                [
+                  ...new Set(
+                    allPosts.map((p) => p.data.category).filter(Boolean)
+                  ),
+                ].length
+              }
             </div>
             <div class="text-sm text-muted-foreground">Categories Covered</div>
           </div>
@@ -232,7 +239,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                       <div class="flex items-start gap-4 mb-6">
                         {/* Avatar */}
                         <a
-                          href={`/authors/${author.slug}`}
+                          href={`/authors/${author.id}`}
                           class="shrink-0 focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
                         >
                           {author.data.avatar ? (
@@ -266,7 +273,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                         {/* Name and Title */}
                         <div class="flex-1 min-w-0">
                           <a
-                            href={`/authors/${author.slug}`}
+                            href={`/authors/${author.id}`}
                             class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
                           >
                             <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors mb-1">
@@ -316,9 +323,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                             {author.stats.categories}
                           </div>
                           <div class="text-xs text-muted-foreground">
-                            {author.stats.categories === 1
-                              ? "Topic"
-                              : "Topics"}
+                            {author.stats.categories === 1 ? "Topic" : "Topics"}
                           </div>
                         </div>
                       </div>
@@ -376,7 +381,12 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                                     stroke-width="2"
                                     d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"
                                   />
-                                  <circle cx="4" cy="4" r="2" stroke="currentColor" />
+                                  <circle
+                                    cx="4"
+                                    cy="4"
+                                    r="2"
+                                    stroke="currentColor"
+                                  />
                                 </svg>
                               </a>
                             )}
@@ -451,7 +461,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
 
                         {/* View Profile Button */}
                         <Button
-                          href={`/authors/${author.slug}`}
+                          href={`/authors/${author.id}`}
                           variant="outline"
                           size="sm"
                           class="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
@@ -487,9 +497,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
         inactiveAuthors.length > 0 && (
           <section class="mb-20">
             <div class="mb-12">
-              <h2 class="text-3xl md:text-4xl font-bold mb-2">
-                Guest Authors
-              </h2>
+              <h2 class="text-3xl md:text-4xl font-bold mb-2">Guest Authors</h2>
               <p class="text-muted-foreground">
                 Authors who haven't published yet
               </p>
@@ -586,10 +594,15 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                                 stroke-width="2"
                                 d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"
                               />
-                              <circle cx="4" cy="4" r="2" stroke="currentColor" />
+                              <circle
+                                cx="4"
+                                cy="4"
+                                r="2"
+                                stroke="currentColor"
+                              />
                             </svg>
                           </a>
-                        )}  
+                        )}
                         {author.data.twitter && (
                           <a
                             href={author.data.twitter}
@@ -636,9 +649,13 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
 
       {/* CTA Section */}
       <section class="text-center py-12">
-        <Card class="bg-linear-to-br from-primary/5 via-primary/10 to-background border-2 border-primary/20 inline-block">
+        <Card
+          class="bg-linear-to-br from-primary/5 via-primary/10 to-background border-2 border-primary/20 inline-block"
+        >
           <CardContent class="p-12 space-y-6 max-w-2xl">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4"
+            >
               <svg
                 class="w-8 h-8"
                 fill="none"
@@ -651,7 +668,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
+                ></path>
               </svg>
             </div>
             <h3 class="text-2xl font-bold">Want to Contribute?</h3>
@@ -676,11 +693,7 @@ const getExtendedBio = (author: CollectionEntry<"authors">) => {
         hsl(var(--border) / 0.3) 1px,
         transparent 1px
       ),
-      linear-gradient(
-        to bottom,
-        hsl(var(--border) / 0.3) 1px,
-        transparent 1px
-      );
+      linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 </style>

@@ -11,7 +11,7 @@ import XIcon from "@/components/icons/XIcon.astro";
 import LinkedInIcon from "@/components/icons/LinkedInIcon.astro";
 import { Image } from "astro:assets";
 import TableOfContents from "@/components/blog/TableOfContents.astro";
-
+import { render } from "astro:content";
 // Get all posts and authors
 const allPosts = await getCollection("blog");
 const allAuthors = await getCollection("authors");
@@ -21,18 +21,15 @@ export async function getStaticPaths() {
 
   return Promise.all(
     posts.map(async (post) => {
-      const author = post.data.author
-        ? await getEntry(post.data.author)
-        : null;
+      const author = post.data.author ? await getEntry(post.data.author) : null;
 
       return {
-        params: { slug: post.slug },
+        params: { slug: post.id },
         props: { post, author },
       };
     })
   );
 }
-
 
 const { post, author } = Astro.props as {
   post: CollectionEntry<"blog">;
@@ -40,12 +37,12 @@ const { post, author } = Astro.props as {
 };
 
 // Render markdown
-const { Content } = await post.render();
+const { Content } = await render(post);
 
 // Filter out the current post and get related articles
 // Prioritize same category, then same tags, then most recent
 const otherPosts = allPosts
-  .filter((p) => p.slug !== post.slug)
+  .filter((p) => p.id !== post.id)
   .map((p) => {
     let relevanceScore = 0;
 
@@ -56,8 +53,8 @@ const otherPosts = allPosts
 
     // Shared tags = +2 per tag
     if (post.data.tags && p.data.tags) {
-      const sharedTags = post.data.tags.filter((tag) =>
-        p.data.tags?.includes(tag),
+      const sharedTags = post.data.tags.filter((tag: string) =>
+        p.data.tags?.includes(tag)
       );
       relevanceScore += sharedTags.length * 2;
     }
@@ -80,14 +77,14 @@ const otherPosts = allPosts
 // Get more posts from the same author
 const authorPosts = author
   ? allPosts
-      .filter((p) => p.slug !== post.slug && p.data.author === post.data.author)
+      .filter((p) => p.id !== post.id && p.data.author === post.data.author)
       .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
       .slice(0, 3)
   : [];
 
 // Calculate reading time with better accuracy
 const wordsPerMinute = 200;
-const textContent = post.body || "";
+const textContent = post.body ?? "";
 const wordCount = textContent.trim().split(/\s+/).filter(Boolean).length;
 const readingTime = Math.ceil(wordCount / wordsPerMinute);
 
@@ -127,7 +124,7 @@ const structuredData = {
     ? {
         "@type": "Person",
         name: author.data.name,
-        url: author.data.website || `${Astro.site}author/${author.slug}`,
+        url: author.data.website || `${Astro.site}author/${author.id}`,
       }
     : undefined,
   publisher: {
@@ -147,10 +144,8 @@ const structuredData = {
 
 <BaseLayout title={post.data.title}>
   <!-- Structured Data -->
-  <script
-    type="application/ld+json"
-    set:html={JSON.stringify(structuredData)}
-  />
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)}
+  ></script>
 
   <main class="min-h-screen">
     <!-- Hero Section with Gradient Background -->
@@ -201,8 +196,8 @@ const structuredData = {
           </svg>
           <span
             class="text-foreground font-medium truncate max-w-xs md:max-w-md"
-            >{post.data.title}</span
-          >
+            >{post.data.title}
+          </span>
         </nav>
 
         <!-- Category Badge -->
@@ -252,7 +247,7 @@ const structuredData = {
             author && (
               <div class="flex items-start gap-4 p-6 rounded-xl bg-muted/30 border border-border/50 backdrop-blur-sm">
                 <a
-                  href={`/authors/${author.slug}`}
+                  href={`/authors/${author.id}`}
                   class="shrink-0 group focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
                   aria-label={`View profile of ${author.data.name}`}
                 >
@@ -288,7 +283,7 @@ const structuredData = {
                   <div class="flex items-start justify-between gap-4 flex-wrap">
                     <div class="min-w-0">
                       <a
-                        href={`/authors/${author.slug}`}
+                        href={`/authors/${author.id}`}
                         class="font-semibold text-foreground hover:text-primary transition-colors focus:outline-none focus:underline"
                       >
                         {author.data.name}
@@ -464,7 +459,9 @@ const structuredData = {
                     <time
                       class="flex items-center gap-2 text-primary"
                       datetime={formatDateISO(post.data.updatedDate)}
-                      title={`Last updated on ${formatDate(post.data.updatedDate)}`}
+                      title={`Last updated on ${formatDate(
+                        post.data.updatedDate
+                      )}`}
                     >
                       <svg
                         class="w-5 h-5 shrink-0"
@@ -497,7 +494,7 @@ const structuredData = {
               role="list"
               aria-label="Article tags"
             >
-              {post.data.tags.map((tag) => (
+              {post.data.tags.map((tag: string) => (
                 <a
                   href={`/blog/tag/${tag.toLowerCase()}/`}
                   class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-md bg-muted/50 text-muted-foreground hover:bg-muted transition border border-border/50 hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -591,7 +588,9 @@ const structuredData = {
           <div class="flex items-center gap-2">
             <span class="text-sm text-muted-foreground mr-2">Share:</span>
             <Button
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(Astro.url.href)}`}
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                post.data.title
+              )}&url=${encodeURIComponent(Astro.url.href)}`}
               variant="ghost"
               size="sm"
               class="w-9 h-9 p-0 flex items-center justify-center"
@@ -602,7 +601,9 @@ const structuredData = {
               <XIcon />
             </Button>
             <Button
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`}
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                Astro.url.href
+              )}`}
               variant="ghost"
               size="sm"
               class="w-9 h-9 p-0 flex items-center justify-center"
@@ -626,7 +627,7 @@ const structuredData = {
               <CardContent class="p-8">
                 <div class="flex flex-col md:flex-row gap-6">
                   <a
-                    href={`/authors/${author.slug}`}
+                    href={`/authors/${author.id}`}
                     class="shrink-0 group focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
                   >
                     {author.data.avatar ? (
@@ -663,7 +664,7 @@ const structuredData = {
                         About the Author
                       </h3>
                       <a
-                        href={`/authors/${author.slug}`}
+                        href={`/authors/${author.id}`}
                         class="text-2xl font-bold hover:text-primary transition-colors focus:outline-none focus:underline"
                       >
                         {author.data.name}
@@ -755,7 +756,7 @@ const structuredData = {
                         </a>
                       )}
                       <Button
-                        href={`/authors/${author.slug}`}
+                        href={`/authors/${author.id}`}
                         variant="outline"
                         size="sm"
                         class="ml-auto"
@@ -810,7 +811,7 @@ const structuredData = {
                     )}
 
                     <a
-                      href={`/blog/${p.slug}/`}
+                      href={`/blog/${p.id}/`}
                       class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
                     >
                       <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
@@ -831,7 +832,7 @@ const structuredData = {
                       </time>
 
                       <Button
-                        href={`/blog/${p.slug}/`}
+                        href={`/blog/${p.id}/`}
                         variant="ghost"
                         size="sm"
                         class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"
@@ -887,7 +888,7 @@ const structuredData = {
                     )}
 
                     <a
-                      href={`/blog/${p.slug}/`}
+                      href={`/blog/${p.id}/`}
                       class="block focus:outline-none focus:ring-2 focus:ring-primary rounded"
                     >
                       <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
@@ -903,7 +904,9 @@ const structuredData = {
                       <div class="flex flex-col gap-2 text-xs text-muted-foreground">
                         <time
                           datetime={formatDateISO(p.data.pubDate)}
-                          title={`Published on ${formatDateShort(p.data.pubDate)}`}
+                          title={`Published on ${formatDateShort(
+                            p.data.pubDate
+                          )}`}
                         >
                           {formatDateShort(p.data.pubDate)}
                         </time>
@@ -914,7 +917,9 @@ const structuredData = {
                             <time
                               class="text-primary"
                               datetime={formatDateISO(p.data.updatedDate)}
-                              title={`Last updated on ${formatDateShort(p.data.updatedDate)}`}
+                              title={`Last updated on ${formatDateShort(
+                                p.data.updatedDate
+                              )}`}
                             >
                               Updated {formatDateShort(p.data.updatedDate)}
                             </time>
@@ -922,7 +927,7 @@ const structuredData = {
                       </div>
 
                       <Button
-                        href={`/blog/${p.slug}/`}
+                        href={`/blog/${p.id}/`}
                         variant="ghost"
                         size="sm"
                         class="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all flex items-center justify-between"

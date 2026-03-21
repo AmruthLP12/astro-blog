@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ site }) => {
         title: post.data.title,
         description: post.data.description,
         pubDate: post.data.pubDate,
-        link: `/blog/${post.slug}/`,
+        link: `/blog/${post.id}/`,
 
         // ✅ FIX 1 — categories must be string[]
         categories: post.data.category ? [post.data.category] : undefined,
