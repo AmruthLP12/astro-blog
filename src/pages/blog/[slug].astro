@@ -546,77 +546,126 @@ const structuredData = {
     }
 
     <!-- Article Content -->
-    <article class="max-w-6xl mx-auto px-6 pb-24">
-      <!-- Table of Contents Placeholder -->
-      <TableOfContents selector="article" />
-
-      <!-- Main Content with Enhanced Typography -->
-      <div class="prose-wrapper">
-        <Prose>
-          <Content />
-        </Prose>
-      </div>
-
-      <!-- Article Footer -->
-      <footer class="mt-16 pt-8 border-t border-border">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div class="flex items-center gap-4">
-            <Button
-              href="/blog"
-              variant="ghost"
-              size="sm"
-              class="flex items-center gap-2"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 19l-7-7 7-7"></path>
-              </svg>
-              Back to Blog
-            </Button>
-          </div>
-
-          <!-- Share Buttons -->
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground mr-2">Share:</span>
-            <Button
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                post.data.title
-              )}&url=${encodeURIComponent(Astro.url.href)}`}
-              variant="ghost"
-              size="sm"
-              class="w-9 h-9 p-0 flex items-center justify-center"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on Twitter"
-            >
-              <XIcon />
-            </Button>
-            <Button
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                Astro.url.href
-              )}`}
-              variant="ghost"
-              size="sm"
-              class="w-9 h-9 p-0 flex items-center justify-center"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Share on LinkedIn"
-            >
-              <LinkedInIcon />
-            </Button>
-          </div>
+    <div class="max-w-7xl mx-auto px-6 pb-24 lg:grid lg:grid-cols-[1fr_300px] lg:gap-12 lg:items-start relative">
+      <article class="min-w-0">
+        <!-- Table of Contents for Mobile (Hidden on Desktop) -->
+        <div class="lg:hidden mb-12">
+          <TableOfContents selector="article" />
         </div>
-      </footer>
-    </article>
+
+        <div class="prose-wrapper">
+          <Prose>
+            <Content />
+          </Prose>
+        </div>
+
+        <!-- Article Footer -->
+        <footer class="mt-16 pt-8 border-t border-border">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-4">
+              <Button
+                href="/blog"
+                variant="ghost"
+                size="sm"
+                class="flex items-center gap-2"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Blog
+              </Button>
+            </div>
+
+            <!-- Share Buttons -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-muted-foreground mr-2">Share:</span>
+              <Button
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                  post.data.title
+                )}&url=${encodeURIComponent(Astro.url.href)}`}
+                variant="ghost"
+                size="sm"
+                class="w-9 h-9 p-0 flex items-center justify-center"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on Twitter"
+              >
+                <XIcon />
+              </Button>
+              <Button
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                  Astro.url.href
+                )}`}
+                variant="ghost"
+                size="sm"
+                class="w-9 h-9 p-0 flex items-center justify-center"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on LinkedIn"
+              >
+                <LinkedInIcon />
+              </Button>
+            </div>
+          </div>
+        </footer>
+      </article>
+
+      <!-- Sidebar (Desktop only) -->
+      <aside class="hidden lg:block sticky top-24 self-start">
+        <div class="space-y-8">
+          <div class="p-6 rounded-xl bg-muted/30 border border-border/50 backdrop-blur-sm">
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Table of Contents</h3>
+            <TableOfContents selector="article" />
+          </div>
+
+          {/* Optional: Add Author minicard here too if desired */}
+        </div>
+      </aside>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button
+      id="scroll-to-top"
+      class="fixed bottom-8 right-8 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-lg opacity-0 translate-y-4 pointer-events-none transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      aria-label="Scroll to top"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    </button>
+
+    <script>
+      const scrollToTopBtn = document.getElementById('scroll-to-top');
+      
+      if (scrollToTopBtn) {
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 500) {
+            scrollToTopBtn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+            scrollToTopBtn.classList.add('opacity-100', 'translate-y-0');
+          } else {
+            scrollToTopBtn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+            scrollToTopBtn.classList.remove('opacity-100', 'translate-y-0');
+          }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+      }
+    </script>
 
     <!-- Author Bio Section (Enhanced) -->
     {
