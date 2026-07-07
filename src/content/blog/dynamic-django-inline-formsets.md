@@ -186,7 +186,7 @@ Consistency matters.
 
 ### Management form (mandatory)
 
-```django
+```python
 {{ formset.management_form }}
 ```
 
@@ -196,7 +196,7 @@ Never forget this. Ever.
 
 ### Rendering existing forms
 
-```django
+```python
 {% for form in formset %}
   <div class="dependents-row">
     {{ form.id }}
@@ -220,7 +220,7 @@ Never forget this. Ever.
 
 This is what JavaScript clones.
 
-```django
+```python
 <div class="empty-form hidden">
   <div class="dependents-row">
     {{ formset.empty_form.id }}

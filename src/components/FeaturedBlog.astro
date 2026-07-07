@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import Card from "./starwind/card/Card.astro";
 import CardContent from "./starwind/card/CardContent.astro";
 const posts = (await getCollection("blog")).sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
 );
 import Button from "./starwind/button/Button.astro";
 import { Image } from "astro:assets";
@@ -132,7 +132,9 @@ const formatDate = (date: Date) => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    {calculateReadingTime(posts[0].body)} min read
+                    {posts[0].body && (
+                      <>{calculateReadingTime(posts[0].body)} min read</>
+                    )}
                   </span>
                 </div>
 

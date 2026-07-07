@@ -328,7 +328,7 @@ sudo systemctl reload apache2
 
 1. You Open:
 
-   ```code
+   ```bash
    http://123.45.67.89:8080
    ```
 
@@ -336,7 +336,7 @@ sudo systemctl reload apache2
 
 3. Apache forwards it to:
 
-```code
+```bash
 http://127.0.0.1:8000
 ```
 

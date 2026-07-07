@@ -64,7 +64,7 @@ import Footer from "@/components/Footer.astro";
     />
 
     <!-- Structured Data -->
-    <script type="application/ld+json">
+    <script is:inline type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Website",
@@ -92,7 +92,7 @@ import Footer from "@/components/Footer.astro";
     </main>
     <Footer />
 
-    <script type="module">
+    <script is:inline type="module">
       document.querySelectorAll("pre").forEach((pre) => {
         const button = document.createElement("button");
         button.setAttribute("aria-label", "Copy code to clipboard");
@@ -113,7 +113,7 @@ import Footer from "@/components/Footer.astro";
       });
     </script>
 
-    <script type="module">
+    <script is:inline type="module">
       document.addEventListener("DOMContentLoaded", () => {
         const lightbox = document.getElementById("lightbox");
         const lightboxImg = document.getElementById("lightbox-img");

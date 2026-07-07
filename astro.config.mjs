@@ -2,7 +2,7 @@
 import { defineConfig } from "astro/config";
 
 import tailwindcss from "@tailwindcss/vite";
-
+import { fileURLToPath } from "node:url";
 import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
@@ -10,7 +10,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        "@": "src",
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
 

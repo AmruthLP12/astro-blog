@@ -5,7 +5,7 @@ interface Props {
 }
 
 const { selector = "article", title = "In This Article" } = Astro.props;
-const uniqueId = `toc-${Math.random().toString(36).substr(2, 9)}`;
+const uniqueId = `toc-${Math.random().toString(36).slice(2, 11)}`;
 ---
 
 <aside class="mb-12 p-6 rounded-xl bg-muted/30 border border-border/50 top-24">
@@ -54,7 +54,7 @@ const uniqueId = `toc-${Math.random().toString(36).substr(2, 9)}`;
 
     if (!container || !toc) return;
 
-    const headings = container.querySelectorAll("h1, h2, h3");
+    const headings = container.querySelectorAll("h1, h3");
 
     toc.innerHTML = "";
 
@@ -81,17 +81,30 @@ const uniqueId = `toc-${Math.random().toString(36).substr(2, 9)}`;
       link.className =
         "hover:text-primary transition-colors block leading-snug";
 
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        document
-          .getElementById(heading.id)
-          .scrollIntoView({ behavior: "smooth", block: "start" });
-        history.pushState(null, "", `#${heading.id}`);
-      });
+        link.addEventListener("click", (e) => {
+    e.preventDefault();
 
-      li.appendChild(link);
-      toc.appendChild(li);
+    const target = document.getElementById(heading.id);
+    if (!target) return;
+
+    const offset = 90;
+    const y = target.getBoundingClientRect().top + window.scrollY - offset;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth",
     });
+
+    history.pushState(null, "", `#${heading.id}`);
+
+    if (e.currentTarget instanceof HTMLAnchorElement) {
+      e.currentTarget.blur();
+    }
+  });
+
+  li.appendChild(link);
+  toc.appendChild(li);
+});
 
     // Active section highlight on scroll
     const observer = new IntersectionObserver(
