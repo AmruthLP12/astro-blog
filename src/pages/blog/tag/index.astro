@@ -1,0 +1,118 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("blog");
+
+const tagMap = new Map<string, number>();
+
+posts.forEach((post) => {
+  post.data.tags?.forEach((tag) => {
+    tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+  });
+});
+
+const tags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]);
+
+const slugify = (text: string) =>
+  text.toLowerCase().replace(/\s+/g, "-");
+---
+
+<BaseLayout
+  title="Browse Tags – Techno Drishti"
+  description="Explore all blog tags on Techno Drishti."
+>
+  <main class="min-h-screen">
+    <div class="mx-auto max-w-5xl px-6 py-16">
+      <!-- Header -->
+      <div class="text-center mb-16">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-md border border-border/50 bg-muted/50 text-sm font-medium text-muted-foreground"
+        >
+          <span class="text-primary text-lg">#</span>
+          Browse Tags
+        </div>
+
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-4">
+          All Tags
+        </h1>
+
+        <p class="text-xl text-muted-foreground">
+          Browse articles by topic
+        </p>
+      </div>
+
+      <!-- Stats -->
+      <div class="flex justify-center mb-14">
+        <div class="rounded-xl border border-border bg-card px-8 py-5 text-center">
+          <div class="text-3xl font-bold">{tags.length}</div>
+          <div class="text-sm text-muted-foreground">
+            {tags.length === 1 ? "Tag" : "Tags"}
+          </div>
+        </div>
+      </div>
+
+      <!-- Tags Grid -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          tags.map(([tag, count]) => (
+            <a
+              href={`/blog/tag/${slugify(tag)}/`}
+              class="group rounded-xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+            >
+              <div class="flex items-center justify-between mb-5">
+                <span class="inline-flex items-center gap-2 text-lg font-semibold">
+                  <span class="text-primary">#</span>
+                  {tag}
+                </span>
+
+                <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  {count}
+                </span>
+              </div>
+
+              <p class="text-sm text-muted-foreground">
+                {count} {count === 1 ? "article" : "articles"}
+              </p>
+
+              <div class="mt-6 flex items-center text-primary font-medium">
+                Explore
+                <svg
+                  class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+
+      {
+        tags.length === 0 && (
+          <div class="py-24 text-center">
+            <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
+              <span class="text-4xl">#</span>
+            </div>
+
+            <h2 class="mb-2 text-2xl font-bold">
+              No tags yet
+            </h2>
+
+            <p class="text-muted-foreground">
+              Tags will appear here once you publish blog posts.
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>

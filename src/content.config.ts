@@ -56,7 +56,9 @@ const blog = defineCollection({
           "productivity",
           "personal",
           "misc",
+          "linux",
           "other",
+
         ])
         .optional(),
 
