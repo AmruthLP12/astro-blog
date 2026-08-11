@@ -1,0 +1,22 @@
+
+name: Deploy dependent websites
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/content/**"
+
+jobs:
+  trigger-deployments:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Portfolio deployment
+        run: |
+          curl -X POST "${{ secrets.PORTFOLIO_DEPLOY_HOOK }}"
+
+      - name: Trigger Company deployment
+        run: |
+          curl -X POST "${{ secrets.COMPANY_DEPLOY_HOOK }}"
