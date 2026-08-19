@@ -57,8 +57,8 @@ const blog = defineCollection({
           "personal",
           "misc",
           "linux",
+          "mobile",
           "other",
-
         ])
         .optional(),
 
