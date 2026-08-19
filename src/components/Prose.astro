@@ -1,5 +1,6 @@
 ---
 ---
+
 <div
   class="prose dark:prose-invert max-w-none
   prose-h1:font-bold prose-h1:text-xl
@@ -8,3 +9,14 @@
 >
   <slot />
 </div>
+
+<script>
+  document.querySelectorAll(".prose a").forEach((link) => {
+    const anchor = link as HTMLAnchorElement;
+
+    if (anchor.hostname !== window.location.hostname) {
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+    }
+  });
+</script>
