@@ -9,17 +9,15 @@ const navItems = [
   { href: "/authors", label: "Authors" },
   {
     href: "/about",
-    label: "About"
+    label: "About",
   },
 ];
 
 const pathname = Astro.url.pathname;
 
 // active if exact match OR blog sub-routes
-const isActive = (href:any) =>
-  href === "/blog"
-    ? pathname.startsWith("/blog")
-    : pathname === href;
+const isActive = (href: any) =>
+  href === "/blog" ? pathname.startsWith("/blog") : pathname === href;
 ---
 
 <nav
@@ -31,14 +29,10 @@ const isActive = (href:any) =>
       <!-- Logo -->
       <a
         href="/"
-        class="flex items-center gap-2 text-lg font-semibold tracking-tight transition-colors"
+        class="text-lg font-semibold tracking-tight transition-colors"
       >
-        <img
-          src="/logo.png"
-          alt="TechnoDrishti logo"
-          class="h-14 w-auto object-contain"
-        />
-        <span class="text-foreground">Techno</span><span class="text-primary">Drishti</span>
+        <span class="text-foreground">Techno</span>
+        <span class="text-primary">Drishti</span>
       </a>
 
       <!-- Desktop Navigation -->
@@ -119,7 +113,7 @@ const isActive = (href:any) =>
         "backdrop-blur-lg",
         "border-b",
         "border-border",
-        "shadow-sm"
+        "shadow-sm",
       );
     } else {
       navbar?.classList.remove(
@@ -127,7 +121,7 @@ const isActive = (href:any) =>
         "backdrop-blur-lg",
         "border-b",
         "border-border",
-        "shadow-sm"
+        "shadow-sm",
       );
     }
   });
